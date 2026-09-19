@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Pet {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(80)
+  species   String
+  breed     String?  @db.VarChar(100)
+  birthDate DateTime? @db.Date
+  sex       String   @default("unknown")
+  notes     String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  records   MedicalRecord[]
+}
+
+model MedicalRecord {
+  id                    String   @id @default(uuid()) @db.Uuid
+  petId                 String   @db.Uuid
+  pet                   Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  type                  String
+  title                 String   @db.VarChar(120)
+  occurredOn            DateTime @db.Date
+  provider              String?  @db.VarChar(120)
+  notes                 String?
+  details               Json     @db.JsonB
+  detailsVersion        Int      @default(1)
+  followUpOn            DateTime? @db.Date
+  followUpNote          String?  @db.VarChar(240)
+  followUpCompletedAt   DateTime? @db.Timestamptz(3)
+  createdAt             DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([petId, occurredOn])
+  @@index([type, occurredOn])
+  @@index([followUpCompletedAt, followUpOn])
+}
