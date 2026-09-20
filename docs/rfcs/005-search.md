@@ -31,3 +31,7 @@ The client keeps an invalid date interval visible with an inline explanation but
 ## Acceptance
 
 Combined filters narrow correctly, date boundaries are inclusive, pages do not overlap, empty results are distinct from no data, and no pet-scoped query returns another pet's records.
+
+## Provider discovery
+
+Record text search matches the related provider name alongside title and notes. Global records also accept `providerId` as a UUID filter, combined with other filters using AND. The selector includes archived providers so historical records remain discoverable.

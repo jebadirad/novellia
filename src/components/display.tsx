@@ -219,7 +219,7 @@ export function RecordList({
                   <span>·</span>
                 </>
               )}
-              <span>{record.provider || 'Clinic not recorded'}</span>
+              <span>{record.provider?.name || 'Clinic not recorded'}</span>
             </div>
           </div>
           <time
@@ -264,7 +264,7 @@ export function RecordTable({ records }: { records: RecordDto[] }) {
                 <th scope="row" className="min-w-45 px-5 py-4.5 font-semibold wrap-anywhere">
                   <Link href={recordHref(record)}>{record.title}</Link>
                 </th>
-                <td className="px-5 py-4.5 text-secondary">{record.provider || 'Not recorded'}</td>
+                <td className="px-5 py-4.5 text-secondary">{record.provider?.name || 'Not recorded'}</td>
               </tr>
             ))}
           </tbody>

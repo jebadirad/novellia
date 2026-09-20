@@ -1,3 +1,4 @@
+import { listProviders } from '@/server/providers';
 import { getPet } from '@/server/pets';
 import { pageData, pageId } from '@/server/page-data';
 import { today } from '@/server/context';
@@ -6,6 +7,7 @@ import { RecordForm } from '@/components/record-form';
 export default async function NewRecord({ params }: { params: Promise<{ petId: string }> }) {
   const id = pageId((await params).petId);
   const pet = await pageData(() => getPet(id));
+  const providers = await listProviders({ q: '', status: 'all' });
   return (
     <>
       <Breadcrumbs
@@ -19,7 +21,7 @@ export default async function NewRecord({ params }: { params: Promise<{ petId: s
         title="Add a medical record"
         subtitle={`Another part of ${pet.name}’s story, kept safe and easy to find.`}
       />
-      <RecordForm petId={id} today={today()} />
+      <RecordForm providers={providers} petId={id} today={today()} />
     </>
   );
 }

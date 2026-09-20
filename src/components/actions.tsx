@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@astryxdesign/core/Button';
 import { AlertDialog } from '@astryxdesign/core/AlertDialog';
 import { Dialog } from '@astryxdesign/core/Dialog';
+import { DropdownMenu } from '@astryxdesign/core/DropdownMenu';
 import { useToast } from '@astryxdesign/core/Toast';
 import { Plus, Check, ArrowRight, MoreHorizontal } from 'lucide-react';
 import type { RecordDto, FieldErrors } from '@/domain/types';
@@ -113,12 +114,20 @@ export function DeleteAction({
   return (
     <>
       {overflow ? (
-        <details>
-          <summary aria-label="Record actions" className="cursor-pointer list-none p-2">
-            <MoreHorizontal size={22} />
-          </summary>
-          {trigger}
-        </details>
+        <DropdownMenu
+          button={{
+            label: 'Record actions',
+            icon: <MoreHorizontal size={22} />,
+            isIconOnly: true,
+            variant: 'ghost',
+          }}
+          hasChevron={false}
+          presentation="popover"
+          placement="below"
+          alignment="end"
+          menuWidth={180}
+          items={[{ label: title, variant: 'destructive', onClick: () => setOpen(true) }]}
+        />
       ) : (
         trigger
       )}

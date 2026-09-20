@@ -12,11 +12,11 @@ Run `npm run theme:build` after changing theme values during development. Instal
 
 ## Shell and responsive layout
 
-Desktop: fixed 224px sidebar; brand at top; Overview, Pets, Records, Follow-ups navigation; shared-demo notice at bottom. Main content has a quiet top line, page title, primary action, and footer.
+Desktop: fixed 224px sidebar; brand at top; Overview, Pets, Records, Follow-ups, Providers navigation; shared-demo notice at bottom. Main content has a quiet top line, page title, primary action, and footer.
 
-Mobile below 768px: compact brand header, full-width content with 18px side gutters, and fixed four-item bottom navigation. Forms and detail columns stack. Cards use three/two/one columns as width decreases.
+Mobile below 768px: compact brand header, full-width content with 18px side gutters, and fixed five-item bottom navigation. Forms and detail columns stack. Cards use three/two/one columns as width decreases.
 
-Full pages handle creation, editing, and record details. Alert dialogs handle delete/discard/type-change confirmation. A small dialog selects a pet when adding a record from a global screen.
+Full pages handle creation, editing, and record details. Alert dialogs handle delete/discard/type-change confirmation. A small dialog selects a pet when adding a record from a global screen. Provider creation and editing use a dialog that preserves the parent record form. Record overflow actions use an anchored Astryx DropdownMenu. All editable dates use the shared Astryx picker with YYYY-MM-DD before, during, and after focus.
 
 ## Screen map
 
@@ -32,6 +32,8 @@ Full pages handle creation, editing, and record details. Alert dialogs handle de
 | /pets/:petId/records/:recordId      | Record details and follow-up                       |
 | /pets/:petId/records/:recordId/edit | Edit the same record type                          |
 | /follow-ups                         | Open/completed tasks, grouped by date              |
+
+Provider management lives at `/providers` and `/providers/:providerId`; see RFC 009.
 
 ## Interaction contract
 

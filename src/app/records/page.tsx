@@ -1,3 +1,4 @@
+import { listProviders } from '@/server/providers';
 import { listRecords } from '@/server/records';
 import { petOptions } from '@/server/pets';
 import { recordQuerySchema, cleanQuery, type SearchParams } from '@/domain/schemas';
@@ -12,7 +13,10 @@ export default async function RecordsPage({
 }) {
   const params = await searchParams;
   const parsed = recordQuerySchema.safeParse(cleanQuery(params));
-  const pets = await petOptions();
+  const [pets, providers] = await Promise.all([
+    petOptions(),
+    listProviders({ q: '', status: 'all' }),
+  ]);
   const result = parsed.success ? await listRecords(parsed.data) : null;
   const filtered = Object.values(cleanQuery(params)).length > 0;
   return (
@@ -23,7 +27,7 @@ export default async function RecordsPage({
         eyebrow="MEDICAL RECORDS"
         action={<AddRecordButton pets={pets} />}
       />
-      <Filters kind="records" pets={pets} />
+      <Filters kind="records" pets={pets} providers={providers} />
       {!parsed.success && (
         <p
           role="alert"

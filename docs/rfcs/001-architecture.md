@@ -6,7 +6,7 @@ One Next.js application contains rendering and a small backend. Ordinary service
 
 ## Data model
 
-Pet has many MedicalRecord rows. The record foreign key uses ON DELETE CASCADE.
+Pet has many MedicalRecord rows. The pet foreign key uses ON DELETE CASCADE. CareProvider has many records through nullable providerId with ON DELETE RESTRICT; see [RFC 009](009-care-providers.md).
 
 | Pet field | PostgreSQL / application rule                              |
 | --------- | ---------------------------------------------------------- |
@@ -20,23 +20,23 @@ Pet has many MedicalRecord rows. The record foreign key uses ON DELETE CASCADE.
 | createdAt | timestamptz(3), server managed                             |
 | updatedAt | timestamptz(3), server managed                             |
 
-| MedicalRecord field  | PostgreSQL / application rule                                |
-| -------------------- | ------------------------------------------------------------ |
-| id                   | UUID                                                         |
-| petId                | UUID foreign key                                             |
-| type                 | application-validated text, deliberately not a database enum |
-| title                | required varchar(120)                                        |
-| occurredOn           | DATE; required, not in future                                |
-| provider             | nullable varchar(120)                                        |
-| notes                | nullable text; maximum 5,000 characters                      |
-| details              | required JSONB, validated by selected type                   |
-| detailsVersion       | integer, server-managed, default 1                           |
-| followUpOn           | nullable DATE, on/after occurredOn                           |
-| followUpNote         | nullable varchar(240), cleared when due date removed         |
-| followUpCompletedAt  | nullable timestamptz(3), assigned by completion operation    |
-| createdAt, updatedAt | server-managed timestamptz(3)                                |
+| MedicalRecord field  | PostgreSQL / application rule                                  |
+| -------------------- | -------------------------------------------------------------- |
+| id                   | UUID                                                           |
+| petId                | UUID foreign key                                               |
+| type                 | application-validated text, deliberately not a database enum   |
+| title                | required varchar(120)                                          |
+| occurredOn           | DATE; required, not in future                                  |
+| providerId           | nullable UUID foreign key to CareProvider (ON DELETE RESTRICT) |
+| notes                | nullable text; maximum 5,000 characters                        |
+| details              | required JSONB, validated by selected type                     |
+| detailsVersion       | integer, server-managed, default 1                             |
+| followUpOn           | nullable DATE, on/after occurredOn                             |
+| followUpNote         | nullable varchar(240), cleared when due date removed           |
+| followUpCompletedAt  | nullable timestamptz(3), assigned by completion operation      |
+| createdAt, updatedAt | server-managed timestamptz(3)                                  |
 
-Indexes: (petId, occurredOn), (type, occurredOn), and (followUpCompletedAt, followUpOn). Age, follow-up groups, and dashboard totals are derived; none are stored.
+Indexes: providerId, (petId, occurredOn), (type, occurredOn), and (followUpCompletedAt, followUpOn). Age, follow-up groups, and dashboard totals are derived; none are stored.
 
 ## API contract
 

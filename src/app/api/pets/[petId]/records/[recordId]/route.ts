@@ -12,7 +12,7 @@ export const PATCH = (request: Request, { params }: Context) =>
   handle(async () => {
     const { petId, recordId } = await params;
     const existing = await getRecord(validateId(petId), validateId(recordId));
-    const { type, title, occurredOn, provider, notes, details, followUpOn, followUpNote } =
+    const { type, title, occurredOn, providerId, notes, details, followUpOn, followUpNote } =
       existing;
     const body = await jsonBody(request);
     return updateRecord(
@@ -22,7 +22,7 @@ export const PATCH = (request: Request, { params }: Context) =>
         type,
         title,
         occurredOn,
-        provider,
+        providerId,
         notes,
         details,
         followUpOn,

@@ -16,6 +16,10 @@ Medication dose and frequency are owner-entered text. No dosing interpretation i
 
 All types share the RFC 001 columns. JSON details use strict Zod objects. An unknown type or unexpected detail property is rejected.
 
+## Provider link
+
+The optional providerId references a saved care provider. An Astryx Typeahead selects an active vet or clinic; Add new provider opens an inline dialog and selects the saved provider. Existing archived links remain readable and editable on historical records. See [RFC 009](009-care-providers.md).
+
 ## Form
 
 ```text

@@ -103,6 +103,12 @@ Use Prisma Postgres with a pooled PostgreSQL connection for `DATABASE_URL`. Keep
 
 Follow [the deployment runbook](docs/deployment.md). Preview and Production must use different databases. Builds generate Prisma Client but never seed, reset, or automatically migrate the hosted database.
 
+## Care providers
+
+Records select a reusable vet or clinic, or create one in a dialog without leaving the record form. Manage names, contact details, and archived entries under Providers. Archive keeps all historical links; permanent deletion is only allowed without linked records. Provider names are unique ignoring case and extra whitespace.
+
+Run `npm run db:migrate` before starting this version against an existing database. The migrations preserve legacy provider names and record links. See [RFC 009](docs/rfcs/009-care-providers.md) for the data model and request paths.
+
 ## Add a record type
 
 See [RFC 004](docs/rfcs/004-medical-records.md) and [the extension exercise](docs/walkthrough.md#extension-rehearsal). Shared columns live in PostgreSQL; type-specific JSON is checked by a Zod discriminated union. UI field and detail maps are exhaustive.

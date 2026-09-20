@@ -27,7 +27,8 @@ model MedicalRecord {
   type                  String
   title                 String   @db.VarChar(120)
   occurredOn            DateTime @db.Date
-  provider              String?  @db.VarChar(120)
+  providerId            String?  @db.Uuid
+  provider              CareProvider? @relation(fields: [providerId], references: [id], onDelete: Restrict)
   notes                 String?
   details               Json     @db.JsonB
   detailsVersion        Int      @default(1)
@@ -40,4 +41,19 @@ model MedicalRecord {
   @@index([petId, occurredOn])
   @@index([type, occurredOn])
   @@index([followUpCompletedAt, followUpOn])
+  @@index([providerId])
+}
+
+model CareProvider {
+  id             String @id @default(uuid()) @db.Uuid
+  name           String @db.VarChar(120)
+  normalizedName String @unique @db.VarChar(120)
+  kind           String @default("clinic")
+  phone          String? @db.VarChar(80)
+  address        String? @db.VarChar(500)
+  notes          String?
+  archivedAt     DateTime? @db.Timestamptz(3)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+  records        MedicalRecord[]
 }

@@ -44,7 +44,7 @@ export async function handle(action: () => Promise<unknown>, status = 200) {
     }
     if (error instanceof AppError)
       return NextResponse.json(
-        { error: { code: error.code, message: error.message } },
+        { error: { code: error.code, message: error.message, fieldErrors: error.fieldErrors } },
         { status: error.status },
       );
     if (

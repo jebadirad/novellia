@@ -1,3 +1,5 @@
+import { normalizeProviderName } from '../src/domain/providers';
+import { createHash } from 'node:crypto';
 import { addDays, toDate, todayIn } from '../src/domain/dates';
 import type { PrismaClient } from '../src/generated/prisma/client';
 export async function seedDemo(
@@ -167,6 +169,18 @@ export async function seedDemo(
   ];
   await db.$transaction(async (tx) => {
     for (const pet of pets) await tx.pet.upsert({ where: { id: pet.id }, create: pet, update: {} });
+    const providers = await Promise.all(
+      ['Green Valley Animal Care', 'Willow Creek Veterinary'].map(async (name) => {
+        const normalizedName = normalizeProviderName(name);
+        // Match the migration's deterministic IDs so seeding preserves renamed providers.
+        const hex = createHash('md5').update(normalizedName).digest('hex');
+        const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20)}`;
+        return (
+          (await tx.careProvider.findFirst({ where: { OR: [{ id }, { normalizedName }] } })) ??
+          (await tx.careProvider.create({ data: { id, name, normalizedName, kind: 'clinic' } }))
+        );
+      }),
+    );
     for (const [index, record] of records.entries()) {
       const id = `20000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`;
       await tx.medicalRecord.upsert({
@@ -178,7 +192,7 @@ export async function seedDemo(
           type: record.type,
           title: record.title,
           occurredOn: toDate(addDays(day, -record.ago))!,
-          provider: record.pet === 1 ? 'Willow Creek Veterinary' : 'Green Valley Animal Care',
+          providerId: providers[record.pet === 1 ? 1 : 0].id,
           details: record.details,
           notes:
             'Fictional demonstration record. Not medical advice or a treatment recommendation.',

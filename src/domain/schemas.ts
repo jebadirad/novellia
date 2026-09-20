@@ -66,7 +66,10 @@ export const medicationDetails = z.strictObject({
 const common = {
   title: requiredText(120, 'Enter a title.'),
   occurredOn: calendarDate,
-  provider: optionalText(120),
+  providerId: z
+    .union([z.uuid(), z.literal(''), z.null()])
+    .optional()
+    .transform((v) => v || null),
   notes: optionalText(5000),
   followUpOn: optionalDate,
   followUpNote: optionalText(240),
@@ -140,6 +143,7 @@ export const recordQuerySchema = z
   .object({
     ...queryBase,
     petId: uuidSchema.optional(),
+    providerId: uuidSchema.optional(),
     type: z.enum(recordTypes).optional(),
     from: calendarDate.optional(),
     to: calendarDate.optional(),

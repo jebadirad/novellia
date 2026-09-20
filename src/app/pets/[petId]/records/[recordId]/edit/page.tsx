@@ -1,3 +1,4 @@
+import { listProviders } from '@/server/providers';
 import { getRecord } from '@/server/records';
 import { pageData, pageId } from '@/server/page-data';
 import { today } from '@/server/context';
@@ -10,6 +11,7 @@ export default async function EditRecord({
 }) {
   const { petId, recordId } = await params;
   const record = await pageData(() => getRecord(pageId(petId), pageId(recordId)));
+  const providers = await listProviders({ q: '', status: 'all' });
   return (
     <>
       <Breadcrumbs
@@ -23,7 +25,7 @@ export default async function EditRecord({
         title="Edit medical record"
         subtitle={`Update the details for ${record.pet.name}.`}
       />
-      <RecordForm petId={petId} record={record} today={today()} />
+      <RecordForm providers={providers} petId={petId} record={record} today={today()} />
     </>
   );
 }

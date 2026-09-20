@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { AlertDialog } from '@astryxdesign/core/AlertDialog';
 import { TextInput } from '@astryxdesign/core/TextInput';
 import { TextArea } from '@astryxdesign/core/TextArea';
-import { DateInput } from '@astryxdesign/core/DateInput';
+import { DateInput } from '@/components/date-input';
 import type { ISODateString } from '@astryxdesign/core/Calendar';
 import type { FieldErrors } from '@/domain/types';
 
@@ -78,11 +78,13 @@ export function useDirtyGuard(dirty: boolean) {
   );
   return { leave, saved, dialog };
 }
-export function focusError(fields: FieldErrors) {
+export function focusError(fields: FieldErrors, scope?: HTMLElement | null) {
   const first = Object.keys(fields)[0];
   if (!first) return;
   requestAnimationFrame(() => {
-    const wrapper = document.querySelector<HTMLElement>(`[data-field="${CSS.escape(first)}"]`);
+    const wrapper = (scope ?? document).querySelector<HTMLElement>(
+      `[data-field="${CSS.escape(first)}"]`,
+    );
     const element = wrapper?.querySelector<HTMLElement>(
       'input:not([type="hidden"]),textarea,button,[tabindex="0"]',
     );
@@ -161,8 +163,6 @@ export function CalendarField({
         min={min as ISODateString | undefined}
         size="lg"
         width="100%"
-        nativePicker="always"
-        format="system_date"
         isOptional={optional}
         status={errors[name] ? { type: 'error', message: errors[name][0] } : undefined}
         statusVariant="detached"

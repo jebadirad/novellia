@@ -60,7 +60,14 @@ export default async function RecordPage({
                 <DetailField label={recordMeta[record.type].dateLabel}>
                   {formatDate(record.occurredOn)}
                 </DetailField>
-                <DetailField label="Vet or clinic">{record.provider}</DetailField>
+                <DetailField label="Vet or clinic">
+                  {record.provider ? (
+                    <Link href={`/providers/${record.provider.id}`}>
+                      {record.provider.name}
+                      {record.provider.archivedAt ? ' (archived)' : ''}
+                    </Link>
+                  ) : null}
+                </DetailField>
                 <RecordDetails record={record} />
               </dl>
             </div>

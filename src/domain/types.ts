@@ -1,8 +1,10 @@
 import type { PetInput, RecordInput } from './schemas';
+import type { ProviderDto } from './providers';
 export type PetDto = PetInput & { id: string; createdAt: string; updatedAt: string };
 export type RecordDto = RecordInput & {
   id: string;
   petId: string;
+  provider: Omit<ProviderDto, 'recordCount'> | null;
   detailsVersion: number;
   followUpCompletedAt: string | null;
   createdAt: string;

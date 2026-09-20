@@ -19,13 +19,13 @@ export async function getDashboard() {
       where: { ...open, followUpOn: { lte: toDate(addDays(day, 30))! } },
       orderBy: [{ followUpOn: 'asc' }, { id: 'asc' }],
       take: 5,
-      include: { pet: true },
+      include: { pet: true, provider: true },
     }),
     listPets({ q: '', page: 1 }),
     prisma.medicalRecord.findMany({
       orderBy: [{ occurredOn: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
       take: 5,
-      include: { pet: true },
+      include: { pet: true, provider: true },
     }),
   ]);
   return {
@@ -50,7 +50,7 @@ export async function getFollowUps(query: FollowUpQuery) {
             : { not: null },
       followUpCompletedAt: query.tab === 'completed' ? { not: null } : null,
     },
-    include: { pet: true },
+    include: { pet: true, provider: true },
     orderBy:
       query.tab === 'completed'
         ? [{ followUpCompletedAt: 'desc' }, { id: 'asc' }]

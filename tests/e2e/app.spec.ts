@@ -64,8 +64,8 @@ for (const type of ['Vet visit', 'Vaccination', 'Medication']) {
     await expect(page.getByRole('button', { name: 'Reopen' })).toBeVisible();
     await page.getByRole('button', { name: 'Reopen' }).click();
     await expect(page.getByRole('button', { name: 'Mark complete' })).toBeVisible();
-    await page.getByLabel('Record actions').click();
-    await page.getByRole('button', { name: 'Delete record', exact: true }).click();
+    await page.getByRole('button', { name: 'Record actions', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Delete record', exact: true }).click();
     await page.getByRole('button', { name: 'Delete permanently' }).click();
     await expect(page).toHaveURL(`/pets/${petId}`);
   });

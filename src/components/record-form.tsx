@@ -1,4 +1,7 @@
 'use client';
+import { ProviderDialog } from './provider-dialog';
+import { ProviderPicker } from './provider-picker';
+import type { ProviderDto } from '@/domain/providers';
 import { useState } from 'react';
 import { Button } from '@astryxdesign/core/Button';
 import { CheckboxInput } from '@astryxdesign/core/CheckboxInput';
@@ -18,16 +21,20 @@ export function RecordForm({
   petId,
   record,
   today,
+  providers,
 }: {
   petId: string;
   record?: RecordDto;
   today: string;
+  providers: ProviderDto[];
 }) {
+  const [providerEntries, setProviderEntries] = useState(providers);
+  const [newProviderName, setNewProviderName] = useState<string | null>(null);
   const initial = {
     type: record?.type ?? 'vet_visit',
     title: record?.title ?? '',
     occurredOn: record?.occurredOn ?? today,
-    provider: record?.provider ?? '',
+    providerId: record?.providerId ?? '',
     notes: record?.notes ?? '',
     followUpOn: record?.followUpOn ?? '',
     followUpNote: record?.followUpNote ?? '',
@@ -50,6 +57,11 @@ export function RecordForm({
   const toast = useToast();
   const set = (field: keyof typeof values, value: string) =>
     setValues((current) => ({ ...current, [field]: value }));
+  function providerSaved(provider: ProviderDto) {
+    setProviderEntries((current) => [...current.filter((p) => p.id !== provider.id), provider]);
+    set('providerId', provider.id);
+    setNewProviderName(null);
+  }
   function changeType(type: RecordType) {
     if (type === values.type) return;
     if (Object.values(details).some(Boolean)) setNextType(type);
@@ -155,13 +167,12 @@ export function RecordForm({
                 errors={errors}
                 max={today}
               />
-              <TextField
-                name="provider"
-                label="Vet or clinic"
-                value={values.provider}
-                onChange={(v) => set('provider', v)}
-                errors={errors}
-                optional
+              <ProviderPicker
+                providers={providerEntries}
+                value={values.providerId}
+                onChange={(v) => set('providerId', v)}
+                error={errors.providerId?.[0]}
+                onAdd={setNewProviderName}
               />
             </div>
           </div>
@@ -231,6 +242,15 @@ export function RecordForm({
           />
         </div>
       </form>
+      {newProviderName !== null && (
+        <ProviderDialog
+          providers={providerEntries}
+          initialName={newProviderName}
+          onSaved={providerSaved}
+          onSelect={providerSaved}
+          onClose={() => setNewProviderName(null)}
+        />
+      )}
       {guard.dialog}
       <AlertDialog
         isOpen={!!nextType}

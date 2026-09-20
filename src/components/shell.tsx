@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { SideNav } from '@astryxdesign/core/SideNav';
 import {
   PawPrint,
+  Stethoscope,
   LayoutDashboard,
   Heart,
   Files,
@@ -15,6 +16,7 @@ const navigation = [
   { href: '/pets', label: 'Pets', icon: Heart },
   { href: '/records', label: 'Records', icon: Files },
   { href: '/follow-ups', label: 'Follow-ups', icon: CalendarCheck2 },
+  { href: '/providers', label: 'Providers', icon: Stethoscope },
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -22,7 +24,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <Link
       key={href}
       href={href}
-      className="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium text-secondary transition-colors hover:bg-muted aria-[current=page]:bg-accent-muted aria-[current=page]:text-accent motion-reduce:transition-none max-md:flex-col max-md:gap-1 max-md:px-3 max-md:py-2 max-md:text-2xs"
+      className="flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium text-secondary transition-colors hover:bg-muted aria-[current=page]:bg-accent-muted aria-[current=page]:text-accent motion-reduce:transition-none max-md:flex-col max-md:gap-1 max-md:px-2 max-md:py-2 max-md:text-2xs"
       aria-current={(href === '/' ? path === '/' : path.startsWith(href)) ? 'page' : undefined}
     >
       <Icon size={19} />

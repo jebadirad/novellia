@@ -3,18 +3,20 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { TextInput } from '@astryxdesign/core/TextInput';
 import { Selector } from '@astryxdesign/core/Selector';
-import { DateInput } from '@astryxdesign/core/DateInput';
+import { DateInput } from '@/components/date-input';
 import type { ISODateString } from '@astryxdesign/core/Calendar';
 import { Button } from '@astryxdesign/core/Button';
 import { recordTypes, recordMeta, speciesLabels } from '@/domain/schemas';
 export function Filters({
   kind,
   pets = [],
+  providers = [],
   scoped = false,
 }: {
   kind: 'pets' | 'records' | 'follow-ups';
   pets?: { id: string; name: string }[];
   scoped?: boolean;
+  providers?: { id: string; name: string; archivedAt: string | null }[];
 }) {
   const params = useSearchParams();
   const path = usePathname();
@@ -86,6 +88,25 @@ export function Filters({
             />
           </div>
         )}
+        {kind === 'records' && !scoped && (
+          <div className="min-w-40 flex-1 md:flex-[0_1_190px]">
+            <Selector
+              label="Filter by provider"
+              isLabelHidden
+              value={params.get('providerId') ?? ''}
+              onChange={(value) => update({ providerId: value })}
+              size="lg"
+              width="100%"
+              options={[
+                { value: '', label: 'All providers' },
+                ...providers.map((p) => ({
+                  value: p.id,
+                  label: p.name + (p.archivedAt ? ' (archived)' : ''),
+                })),
+              ]}
+            />
+          </div>
+        )}
         {kind === 'pets' && (
           <div className="min-w-32 flex-1 md:min-w-36 md:flex-[0_1_160px]">
             <Selector
@@ -139,8 +160,6 @@ export function Filters({
                 label="From date"
                 value={(dates.from || undefined) as ISODateString | undefined}
                 onChange={(value) => changeDate('from', value ?? '')}
-                nativePicker="always"
-                format="system_date"
                 size="lg"
                 width="100%"
               />
@@ -150,8 +169,6 @@ export function Filters({
                 label="To date"
                 value={(dates.to || undefined) as ISODateString | undefined}
                 onChange={(value) => changeDate('to', value ?? '')}
-                nativePicker="always"
-                format="system_date"
                 size="lg"
                 width="100%"
               />

@@ -16,7 +16,7 @@ export async function getPet(id: string) {
         where: { followUpOn: { not: null }, followUpCompletedAt: null },
         orderBy: [{ followUpOn: 'asc' }, { id: 'asc' }],
         take: 1,
-        include: { pet: true },
+        include: { pet: true, provider: true },
       },
     },
   });
@@ -49,7 +49,7 @@ export async function listPets(query: PetQuery): Promise<PageResult<PetSummary>>
           where: { followUpOn: { not: null }, followUpCompletedAt: null },
           orderBy: [{ followUpOn: 'asc' }, { id: 'asc' }],
           take: 1,
-          include: { pet: true },
+          include: { pet: true, provider: true },
         },
       },
     }),

@@ -35,6 +35,7 @@ The lockfile pins actual package versions. Styling uses bundled CSS rather than 
 6. [Overview dashboard](rfcs/006-dashboard.md)
 7. [Follow-ups](rfcs/007-follow-ups.md)
 8. [Delivery and verification](rfcs/008-delivery.md)
+9. [Reusable care providers](rfcs/009-care-providers.md)
 
 Each RFC records screen structure, behavior, data dependencies, interfaces, tradeoffs, and acceptance checks.
 
