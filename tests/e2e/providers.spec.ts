@@ -17,6 +17,107 @@ test.afterEach(async ({ request }) => {
   for (const id of providerIds) await request.delete(`/api/providers/${id}`);
 });
 
+test('validates contact fields, fills structured suggestions, and saves without lookup', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/providers');
+  await page.getByRole('button', { name: 'Add provider', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  const name = `Address Clinic ${Date.now()}`;
+  await dialog.getByRole('textbox', { name: 'Provider name' }).fill(name);
+  const phone = dialog.getByRole('textbox', { name: 'Phone' });
+  await phone.fill('555-0100');
+  await phone.press('Tab');
+  await expect(
+    dialog.getByText('Enter a 10-digit U.S. phone number, including area code.'),
+  ).toBeVisible();
+  await phone.fill('+1 480-555-0100 x23');
+  await phone.press('Tab');
+  await expect(phone).toHaveValue('(480) 555-0100 ext. 23');
+  const zip = dialog.getByRole('textbox', { name: 'ZIP code' });
+  await zip.fill('abc');
+  await zip.press('Tab');
+  await expect(dialog.getByText('Enter a 5-digit ZIP code or ZIP+4 (12345-6789).')).toBeVisible();
+  await dialog.getByRole('textbox', { name: 'Address line 2' }).fill('Suite 7');
+  await page.route('**/api/address-suggestions?*', (route) =>
+    route.fulfill({
+      json: {
+        suggestions: [
+          {
+            id: 'example',
+            label: '100 Example Street, Phoenix, AZ, 85001',
+            addressLine1: '100 Example Street',
+            city: 'Phoenix',
+            state: 'AZ',
+            zip: '85001',
+          },
+        ],
+      },
+    }),
+  );
+  const search = dialog.getByRole('combobox', { name: 'Find a U.S. address' });
+  await search.fill('100 Example');
+  await page.getByRole('option', { name: '100 Example Street, Phoenix, AZ, 85001' }).click();
+  await expect(dialog.getByRole('textbox', { name: 'Address line 1' })).toHaveValue(
+    '100 Example Street',
+  );
+  await expect(dialog.getByRole('textbox', { name: 'City' })).toHaveValue('Phoenix');
+  await expect(zip).toHaveValue('85001');
+  await expect(dialog.getByRole('textbox', { name: 'Address line 2' })).toHaveValue('Suite 7');
+  await page.unroute('**/api/address-suggestions?*');
+  await page.route('**/api/address-suggestions?*', (route) =>
+    route.fulfill({ status: 503, json: { error: { message: 'Unavailable' } } }),
+  );
+  await search.fill('Another address');
+  await expect(
+    dialog.getByText('Address search is unavailable. You can still enter the address below.'),
+  ).toBeVisible();
+  await dialog.getByRole('textbox', { name: 'Address line 1' }).fill('200 Manual Street');
+  await zip.fill('021081234');
+  await zip.press('Tab');
+  await expect(zip).toHaveValue('02108-1234');
+  const responsePromise = page.waitForResponse(
+    (r) => r.url().endsWith('/api/providers') && r.request().method() === 'POST',
+  );
+  await dialog.getByRole('button', { name: 'Add provider', exact: true }).click();
+  const response = await responsePromise;
+  expect(response.status()).toBe(201);
+  const provider = await response.json();
+  providerIds.push(provider.id);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  const stored = await (await request.get(`/api/providers/${provider.id}`)).json();
+  expect(stored).toMatchObject({
+    phone: '(480) 555-0100 ext. 23',
+    addressLine1: '200 Manual Street',
+    addressLine2: 'Suite 7',
+    city: 'Phoenix',
+    state: 'AZ',
+    zip: '02108-1234',
+  });
+  expect(
+    (await request.patch(`/api/providers/${provider.id}`, { data: { phone: '123' } })).status(),
+  ).toBe(422);
+  expect(
+    (await request.patch(`/api/providers/${provider.id}`, { data: { state: 'ZZ' } })).status(),
+  ).toBe(422);
+  expect(
+    (await request.patch(`/api/providers/${provider.id}`, { data: { zip: '123' } })).status(),
+  ).toBe(422);
+  const cleared = await request.patch(`/api/providers/${provider.id}`, {
+    data: { phone: '', addressLine1: '', addressLine2: '', city: '', state: '', zip: '' },
+  });
+  expect(cleared.status()).toBe(200);
+  expect(await cleared.json()).toMatchObject({
+    phone: null,
+    addressLine1: null,
+    addressLine2: null,
+    city: null,
+    state: null,
+    zip: null,
+  });
+});
+
 test('inline creation preserves the record, handles failed saves, and selects existing providers', async ({
   page,
   request,
@@ -102,7 +203,7 @@ test('provider management protects historical links and works on mobile', async 
   await page.getByRole('button', { name: 'Edit provider', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('textbox', { name: 'Provider name' }).fill(`${name} North`);
-  await dialog.getByRole('textbox', { name: 'Phone' }).fill('555-0101');
+  await dialog.getByRole('textbox', { name: 'Phone' }).fill('(480) 555-0101');
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth', 375);
   // Measure the settled dialog, not its translucent opening animation.
   await dialog.evaluate(async (element) => {

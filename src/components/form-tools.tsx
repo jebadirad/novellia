@@ -99,6 +99,8 @@ type FieldProps = {
   errors: FieldErrors;
   optional?: boolean;
   placeholder?: string;
+  autoComplete?: string;
+  onBlur?: () => void;
 };
 export function TextField({
   name,
@@ -108,9 +110,11 @@ export function TextField({
   errors,
   optional,
   placeholder,
+  autoComplete,
+  onBlur,
 }: FieldProps) {
   return (
-    <div data-field={name}>
+    <div data-field={name} onBlur={onBlur}>
       <TextInput
         label={label}
         htmlName={name}
@@ -120,6 +124,7 @@ export function TextField({
         width="100%"
         isOptional={optional}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         status={errors[name] ? { type: 'error', message: errors[name][0] } : undefined}
         statusVariant="detached"
       />

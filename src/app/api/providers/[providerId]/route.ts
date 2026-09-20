@@ -8,10 +8,22 @@ export const GET = (_: Request, { params }: Context) =>
 export const PATCH = (request: Request, { params }: Context) =>
   handle(async () => {
     const id = validateId((await params).providerId);
-    const { name, kind, phone, address, notes } = await getProvider(id);
+    const { name, kind, phone, addressLine1, addressLine2, city, state, zip, notes } =
+      await getProvider(id);
     return updateProvider(
       id,
-      providerSchema.parse({ name, kind, phone, address, notes, ...(await jsonBody(request)) }),
+      providerSchema.parse({
+        name,
+        kind,
+        phone,
+        addressLine1,
+        addressLine2,
+        city,
+        state,
+        zip,
+        notes,
+        ...(await jsonBody(request)),
+      }),
     );
   });
 export const DELETE = (_: Request, { params }: Context) =>

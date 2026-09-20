@@ -109,6 +109,8 @@ Records select a reusable vet or clinic, or create one in a dialog without leavi
 
 Run `npm run db:migrate` before starting this version against an existing database. The migrations preserve legacy provider names and record links. See [RFC 009](docs/rfcs/009-care-providers.md) for the data model and request paths.
 
+Provider contact forms validate and format U.S. phone numbers and store address line 1, line 2, city, state, and ZIP separately. Optional street-address search uses Photon without API keys or signup. Manual entry works even when lookup is unavailable. Existing address text is retained in address line 1 for review; no automatic guesses are made about city/state/ZIP.
+
 ## Add a record type
 
 See [RFC 004](docs/rfcs/004-medical-records.md) and [the extension exercise](docs/walkthrough.md#extension-rehearsal). Shared columns live in PostgreSQL; type-specific JSON is checked by a Zod discriminated union. UI field and detail maps are exhaustive.

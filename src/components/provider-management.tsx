@@ -1,4 +1,5 @@
 'use client';
+import { formatAddress } from '@/domain/contact';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -82,8 +83,8 @@ export function ProviderDirectory({ providers }: { providers: ProviderDto[] }) {
               <p className="mt-3 text-sm">
                 {provider.recordCount} linked {provider.recordCount === 1 ? 'record' : 'records'}
               </p>
-              {provider.address && (
-                <p className="mt-2 text-sm text-secondary">{provider.address}</p>
+              {formatAddress(provider) && (
+                <p className="mt-2 text-sm text-secondary">{formatAddress(provider)}</p>
               )}
             </Link>
           ))}

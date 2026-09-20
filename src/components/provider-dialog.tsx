@@ -12,6 +12,9 @@ import {
   normalizeProviderName,
   type ProviderDto,
 } from '@/domain/providers';
+import { usStates } from '@/domain/contact';
+import { AddressPicker } from './address-picker';
+import { PhoneField } from './phone-field';
 import type { FieldErrors } from '@/domain/types';
 import { TextField, NotesField, focusError, useDirtyGuard } from './form-tools';
 import { mutate, RequestError } from './actions';
@@ -36,7 +39,11 @@ export function ProviderDialog({
     name: provider?.name ?? initialName,
     kind: provider?.kind ?? 'clinic',
     phone: provider?.phone ?? '',
-    address: provider?.address ?? '',
+    addressLine1: provider?.addressLine1 ?? '',
+    addressLine2: provider?.addressLine2 ?? '',
+    city: provider?.city ?? '',
+    state: provider?.state ?? '',
+    zip: provider?.zip ?? '',
     notes: provider?.notes ?? '',
   };
   const [values, setValues] = useState(initial);
@@ -67,8 +74,30 @@ export function ProviderDialog({
   const exact = knownProviders.find(
     (p) => p.id !== provider?.id && normalizeProviderName(p.name) === normalized,
   );
-  const set = (key: keyof typeof values, value: string) =>
+  const set = (key: keyof typeof values, value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
+    setErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+  function validateField(key: keyof typeof values) {
+    const result = providerSchema.shape[key].safeParse(values[key]);
+    if (!result.success)
+      setErrors((current) => ({
+        ...current,
+        [key]: result.error.issues.map((issue) => issue.message),
+      }));
+    else {
+      setValues((current) => ({ ...current, [key]: result.data ?? '' }));
+      setErrors((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+    }
+  }
   function close() {
     if (pending) return;
     if (dirty) setDiscard(true);
@@ -162,6 +191,7 @@ export function ProviderDialog({
             label="Provider name"
             value={values.name}
             onChange={(v) => set('name', v)}
+            onBlur={() => validateField('name')}
             errors={errors}
           />
           {(exact || matches.length > 0) && (
@@ -202,22 +232,91 @@ export function ProviderDialog({
             options={Object.entries(providerKinds).map(([value, label]) => ({ value, label }))}
             width="100%"
           />
-          <TextField
-            name="phone"
-            label="Phone"
+          <PhoneField
             value={values.phone}
             onChange={(v) => set('phone', v)}
+            onBlur={() => validateField('phone')}
             errors={errors}
-            optional
           />
-          <TextField
-            name="address"
-            label="Address"
-            value={values.address}
-            onChange={(v) => set('address', v)}
-            errors={errors}
-            optional
-          />
+          <fieldset className="min-w-0 space-y-4 border-t border-border pt-4">
+            <legend className="text-base font-semibold">Address</legend>
+            <AddressPicker
+              onSelect={(address) => {
+                setValues((current) => ({
+                  ...current,
+                  addressLine1: address.addressLine1 ?? '',
+                  city: address.city ?? '',
+                  state: address.state ?? '',
+                  zip: address.zip ?? '',
+                }));
+                setErrors((current) => {
+                  const next = { ...current };
+                  for (const key of ['addressLine1', 'city', 'state', 'zip']) delete next[key];
+                  return next;
+                });
+              }}
+            />
+            <TextField
+              name="addressLine1"
+              label="Address line 1"
+              value={values.addressLine1}
+              onChange={(v) => set('addressLine1', v)}
+              onBlur={() => validateField('addressLine1')}
+              errors={errors}
+              autoComplete="address-line1"
+              placeholder="Street number and street"
+              optional
+            />
+            <TextField
+              name="addressLine2"
+              label="Address line 2"
+              value={values.addressLine2}
+              onChange={(v) => set('addressLine2', v)}
+              onBlur={() => validateField('addressLine2')}
+              errors={errors}
+              autoComplete="address-line2"
+              placeholder="Suite, unit, or building"
+              optional
+            />
+            <TextField
+              name="city"
+              label="City"
+              value={values.city}
+              onChange={(v) => set('city', v)}
+              onBlur={() => validateField('city')}
+              errors={errors}
+              autoComplete="address-level2"
+              optional
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div data-field="state">
+                <Selector
+                  label="State"
+                  isOptional
+                  width="100%"
+                  value={values.state}
+                  onChange={(v) => set('state', v)}
+                  options={[
+                    { value: '', label: 'Select a state' },
+                    ...Object.entries(usStates).map(([value, label]) => ({ value, label })),
+                  ]}
+                  status={errors.state ? { type: 'error', message: errors.state[0] } : undefined}
+                  statusVariant="detached"
+                />
+              </div>
+              <TextField
+                name="zip"
+                label="ZIP code"
+                value={values.zip}
+                onChange={(v) => set('zip', v)}
+                onBlur={() => validateField('zip')}
+                errors={errors}
+                autoComplete="postal-code"
+                placeholder="85001 or 85001-1234"
+                optional
+              />
+            </div>
+          </fieldset>
           <NotesField
             name="notes"
             label="Provider notes"

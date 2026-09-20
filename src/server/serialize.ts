@@ -1,5 +1,5 @@
 import type { Pet, MedicalRecord, CareProvider } from '@/generated/prisma/client';
-import { providerSchema, type ProviderDto } from '@/domain/providers';
+import { type ProviderDto } from '@/domain/providers';
 import { dateOnly } from '@/domain/dates';
 import { recordSchema, petSchema } from '@/domain/schemas';
 import type { PetDto, RecordDto } from '@/domain/types';
@@ -49,13 +49,16 @@ export function providerDto(
   provider: CareProvider & { _count?: { records: number } },
 ): ProviderDto {
   return {
-    ...providerSchema.parse({
-      name: provider.name,
-      kind: provider.kind,
-      phone: provider.phone,
-      address: provider.address,
-      notes: provider.notes,
-    }),
+    name: provider.name,
+    kind: provider.kind as ProviderDto['kind'],
+    // Older phone values remain readable; stricter validation applies on save.
+    phone: provider.phone,
+    addressLine1: provider.addressLine1,
+    addressLine2: provider.addressLine2,
+    city: provider.city,
+    state: provider.state,
+    zip: provider.zip,
+    notes: provider.notes,
     id: provider.id,
     archivedAt: provider.archivedAt?.toISOString() ?? null,
     recordCount: provider._count?.records ?? 0,

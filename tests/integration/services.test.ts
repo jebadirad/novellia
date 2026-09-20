@@ -40,9 +40,22 @@ describe('database workflows', () => {
     const providerInput = providerSchema.parse({
       name: '  Test   Clinic ',
       kind: 'clinic',
-      phone: '555-0100',
+      phone: '(480) 555-0100',
+      addressLine1: '100 Example Street',
+      addressLine2: 'Suite 2',
+      city: 'Phoenix',
+      state: 'az',
+      zip: '850011234',
     });
     const provider = await createProvider(providerInput);
+    expect(provider).toMatchObject({
+      phone: '(480) 555-0100',
+      addressLine1: '100 Example Street',
+      addressLine2: 'Suite 2',
+      city: 'Phoenix',
+      state: 'AZ',
+      zip: '85001-1234',
+    });
     const duplicates = await Promise.allSettled([
       createProvider(providerSchema.parse({ name: 'TEST CLINIC' })),
       createProvider(providerSchema.parse({ name: 'test  clinic' })),

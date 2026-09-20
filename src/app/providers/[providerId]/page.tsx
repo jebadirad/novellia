@@ -1,3 +1,4 @@
+import { formatAddress } from '@/domain/contact';
 import Link from 'next/link';
 import { getProvider, listProviders } from '@/server/providers';
 import { pageData, pageId } from '@/server/page-data';
@@ -29,7 +30,7 @@ export default async function ProviderPage({
             </div>
             <div>
               <dt className="text-secondary">Address</dt>
-              <dd className="whitespace-pre-wrap">{provider.address || 'Not recorded'}</dd>
+              <dd className="whitespace-pre-wrap">{formatAddress(provider) || 'Not recorded'}</dd>
             </div>
             <div>
               <dt className="text-secondary">Notes</dt>
