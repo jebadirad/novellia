@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { TextInput } from '@astryxdesign/core/TextInput';
 import { Selector } from '@astryxdesign/core/Selector';
@@ -29,27 +29,48 @@ export function Filters({
   });
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentQuery = useRef(params.toString());
+  const pendingSearch = useRef<string | null>(null);
+  const navigationQuery = useRef<string | null>(null);
+  const cancelSearch = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    pendingSearch.current = null;
+  }, []);
   useEffect(() => {
-    currentQuery.current = params.toString();
-    // Browser Back/Forward restores controlled inputs to the URL's state.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setQ(params.get('q') ?? '');
+    const query = params.toString();
+    // External navigation replaces the draft. Our own navigation may finish
+    // while the owner is already typing their next search, which must survive.
+    if (query !== navigationQuery.current) cancelSearch();
+    navigationQuery.current = null;
+    currentQuery.current = query;
+    setQ(pendingSearch.current ?? params.get('q') ?? '');
     setDates({ from: params.get('from') ?? '', to: params.get('to') ?? '' });
-  }, [params]);
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
+  }, [params, cancelSearch]);
+  useEffect(() => {
+    function restoreHistory() {
+      // Cancel immediately, before the restored server page finishes loading.
+      cancelSearch();
+      navigationQuery.current = null;
+      currentQuery.current = window.location.search.slice(1);
+    }
+    window.addEventListener('popstate', restoreHistory);
+    return () => {
+      cancelSearch();
+      window.removeEventListener('popstate', restoreHistory);
+    };
+  }, [cancelSearch]);
   function update(changes: Record<string, string>, replace = false) {
     const next = new URLSearchParams(currentQuery.current);
+    // A select/date change commits the pending text together with the filter.
+    if (pendingSearch.current !== null) changes = { q: pendingSearch.current, ...changes };
+    cancelSearch();
     for (const [key, value] of Object.entries(changes)) {
       if (value) next.set(key, value);
       else next.delete(key);
     }
     next.delete('page');
     currentQuery.current = next.toString();
+    navigationQuery.current = next.toString();
     startTransition(() => {
       const href = `${path}${next.size ? `?${next}` : ''}`;
       if (replace) router.replace(href, { scroll: false });
@@ -79,7 +100,8 @@ export function Filters({
               value={q}
               onChange={(value) => {
                 setQ(value);
-                if (timer.current) clearTimeout(timer.current);
+                cancelSearch();
+                pendingSearch.current = value;
                 timer.current = setTimeout(() => update({ q: value }, true), 300);
               }}
               size="lg"
@@ -195,7 +217,8 @@ export function Filters({
             variant="ghost"
             size="sm"
             onClick={() => {
-              if (timer.current) clearTimeout(timer.current);
+              cancelSearch();
+              navigationQuery.current = '';
               currentQuery.current = '';
               setQ('');
               setDates({ from: '', to: '' });
