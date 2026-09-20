@@ -22,19 +22,11 @@ import {
   listProviders,
 } from '../../src/server/providers';
 import { providerSchema } from '../../src/domain/providers';
+import { testDatabaseLifecycle } from '../database-lifecycle';
 const day = today();
-beforeAll(async () => {
-  if (!new URL(process.env.DATABASE_URL!).pathname.endsWith('/novellia_test'))
-    throw new Error('Integration tests require the dedicated novellia_test database.');
-  await prisma.pet.deleteMany();
-  await prisma.careProvider.deleteMany();
-});
-afterAll(async () => {
-  await prisma.pet.deleteMany();
-  await prisma.careProvider.deleteMany();
-  await prisma.$disconnect();
-  await pool.end();
-});
+const database = testDatabaseLifecycle(prisma, pool, process.env.DATABASE_URL);
+beforeAll(database.setup);
+afterAll(database.cleanup);
 describe('database workflows', () => {
   it('reuses providers, protects history, and rejects unavailable links', async () => {
     const providerInput = providerSchema.parse({
