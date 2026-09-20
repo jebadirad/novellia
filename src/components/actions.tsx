@@ -29,13 +29,16 @@ export async function mutate(url: string, method: string, body?: unknown) {
   } catch {
     throw new RequestError('Could not connect. Your changes are still here; please try again.');
   }
-  if (response.status === 204) return null;
+  if (response.status === 204) {
+    return null;
+  }
   const result = await response.json().catch(() => null);
-  if (!response.ok)
+  if (!response.ok) {
     throw new RequestError(
       result?.error?.message ?? 'Something went wrong. Please try again.',
       result?.error?.fieldErrors,
     );
+  }
   return result;
 }
 export function FollowUpAction({ record }: { record: RecordDto }) {
@@ -44,7 +47,9 @@ export function FollowUpAction({ record }: { record: RecordDto }) {
   const router = useRouter();
   const toast = useToast();
   async function update() {
-    if (pending) return;
+    if (pending) {
+      return;
+    }
     setPending(true);
     setError('');
     try {
@@ -95,7 +100,9 @@ export function DeleteAction({
   const router = useRouter();
   const toast = useToast();
   async function remove() {
-    if (pending) return;
+    if (pending) {
+      return;
+    }
     setPending(true);
     setError('');
     try {
@@ -134,7 +141,9 @@ export function DeleteAction({
       <AlertDialog
         isOpen={open}
         onOpenChange={(value) => {
-          if (!pending) setOpen(value);
+          if (!pending) {
+            setOpen(value);
+          }
         }}
         title={title}
         description={error ? `${description} ${error}` : description}
@@ -158,7 +167,7 @@ export function AddRecordButton({
   petId?: string;
 }) {
   const [open, setOpen] = useState(false);
-  if (petId)
+  if (petId) {
     return (
       <Button
         href={`/pets/${petId}/records/new`}
@@ -168,7 +177,8 @@ export function AddRecordButton({
         size="lg"
       />
     );
-  if (!pets?.length)
+  }
+  if (!pets?.length) {
     return (
       <Button
         href="/pets/new"
@@ -177,6 +187,7 @@ export function AddRecordButton({
         icon={<Plus size={17} />}
       />
     );
+  }
   return (
     <>
       <Button

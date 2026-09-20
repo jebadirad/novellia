@@ -10,8 +10,9 @@ describe('live phone masking', () => {
       ['4805', '(480) 5'],
       ['4805550', '(480) 555-0'],
       ['4805550100', '(480) 555-0100'],
-    ])
+    ]) {
       expect(maskPhone(input).value).toBe(value);
+    }
   });
   it('preserves country codes, extensions, and invalid extra input for validation', () => {
     expect(maskPhone('+1 4805550100 x23').value).toBe('+1 (480) 555-0100 x23');

@@ -37,7 +37,9 @@ export function testDatabaseLifecycle(
     },
     async cleanup() {
       try {
-        if (cleanupAllowed) await clearTestData();
+        if (cleanupAllowed) {
+          await clearTestData();
+        }
       } finally {
         try {
           await db.$disconnect();

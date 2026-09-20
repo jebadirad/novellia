@@ -59,6 +59,21 @@ Astryx owns the UI components; Tailwind CSS v4 owns application layouts and cust
 
 The generated theme provides styling on the initial server-rendered page. `globals.css` contains the cascade order, Astryx token bridge, a few app-specific token aliases, and base rules. CSS Modules and application inline style objects have been removed. Prettier sorts Tailwind classes automatically.
 
+## Code style
+
+ESLint enforces braces for every `if`, `else`, and loop body (`curly: ["error", "all"]`). Prettier handles formatting; it does not add required control-flow braces.
+
+The ESLint flat config explicitly uses `eslint-plugin-react`'s `recommended` and `jsx-runtime` presets. TypeScript files use static prop types instead of the `react/prop-types` rule. Next.js's Hooks, accessibility, framework, and TypeScript checks remain enabled. Additional Airbnb-style rules cover comparisons, declarations, object shorthand, JSX conventions, stable keys, and component safety. This is not the complete Airbnb preset: published `eslint-config-airbnb@19.0.4` targets ESLint 7/8 and older Hooks peer dependencies. We keep the current Next.js toolchain and its modern JSX runtime rather than forcing that legacy configuration.
+
+`eslint-config-prettier` disables conflicting formatting rules. Prettier uses two spaces, semicolons, single quotes in JavaScript, LF line endings, trailing commas, and Tailwind class sorting.
+
+- `npm run lint`: enforce rules with zero allowed warnings.
+- `npm run lint:fix`: apply available ESLint fixes, including missing braces; remaining violations still fail.
+- `npm run format`: apply Prettier formatting.
+- `npm run format:check`: check formatting without modifying files.
+
+Run ESLint fixes before Prettier when applying both. The configuration deliberately reports existing violations until they are fixed; adding a rule does not rewrite application code.
+
 ## Important behavior
 
 - Three record types: vet visit, vaccination, medication.

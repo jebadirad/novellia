@@ -20,8 +20,9 @@ describe('U.S. contact validation', () => {
       '(480) 555-0100',
       '+1 (480) 555-0100',
       '1.480.555.0100',
-    ])
+    ]) {
       expect(phoneSchema.parse(phone)).toBe('(480) 555-0100');
+    }
     expect(phoneSchema.parse('4805550100 x23')).toBe('(480) 555-0100 ext. 23');
     expect(formatUsPhone('(480) 555-0100 ext. 23')).toBe('(480) 555-0100 ext. 23');
     expect(phoneSchema.parse('')).toBeNull();
@@ -33,16 +34,18 @@ describe('U.S. contact validation', () => {
       '0000000000',
       '(4805550100',
       '4805550100 ext.',
-    ])
+    ]) {
       expect(phoneSchema.safeParse(phone).success).toBe(false);
+    }
   });
   it('validates state and ZIP shape, preserves leading zeros, allows partial addresses', () => {
     expect(stateSchema.parse('az')).toBe('AZ');
     expect(stateSchema.safeParse('ZZ').success).toBe(false);
     expect(zipSchema.parse('02108')).toBe('02108');
     expect(zipSchema.parse('021081234')).toBe('02108-1234');
-    for (const zip of ['1234', 'ABCDE', '123456', '12345-123'])
+    for (const zip of ['1234', 'ABCDE', '123456', '12345-123']) {
       expect(zipSchema.safeParse(zip).success).toBe(false);
+    }
     const partial = providerSchema.parse({ name: 'Clinic', city: 'Phoenix' });
     expect(partial.addressLine1).toBeNull();
     expect(
@@ -119,10 +122,11 @@ describe('address lookup adapter', () => {
   it('rejects short/oversized queries before any upstream request', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    for (const q of ['abc', 'x'.repeat(201)])
+    for (const q of ['abc', 'x'.repeat(201)]) {
       expect(
         (await GET(new Request(`http://localhost/api/address-suggestions?q=${q}`))).status,
       ).toBe(400);
+    }
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

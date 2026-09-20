@@ -32,7 +32,9 @@ export function Filters({
   const pendingSearch = useRef<string | null>(null);
   const navigationQuery = useRef<string | null>(null);
   const cancelSearch = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current);
+    if (timer.current) {
+      clearTimeout(timer.current);
+    }
     timer.current = null;
     pendingSearch.current = null;
   }, []);
@@ -40,7 +42,9 @@ export function Filters({
     const query = params.toString();
     // External navigation replaces the draft. Our own navigation may finish
     // while the owner is already typing their next search, which must survive.
-    if (query !== navigationQuery.current) cancelSearch();
+    if (query !== navigationQuery.current) {
+      cancelSearch();
+    }
     navigationQuery.current = null;
     currentQuery.current = query;
     setQ(pendingSearch.current ?? params.get('q') ?? '');
@@ -62,26 +66,35 @@ export function Filters({
   function update(changes: Record<string, string>, replace = false) {
     const next = new URLSearchParams(currentQuery.current);
     // A select/date change commits the pending text together with the filter.
-    if (pendingSearch.current !== null) changes = { q: pendingSearch.current, ...changes };
+    const updates =
+      pendingSearch.current !== null ? { q: pendingSearch.current, ...changes } : changes;
     cancelSearch();
-    for (const [key, value] of Object.entries(changes)) {
-      if (value) next.set(key, value);
-      else next.delete(key);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) {
+        next.set(key, value);
+      } else {
+        next.delete(key);
+      }
     }
     next.delete('page');
     currentQuery.current = next.toString();
     navigationQuery.current = next.toString();
     startTransition(() => {
       const href = `${path}${next.size ? `?${next}` : ''}`;
-      if (replace) router.replace(href, { scroll: false });
-      else router.push(href, { scroll: false });
+      if (replace) {
+        router.replace(href, { scroll: false });
+      } else {
+        router.push(href, { scroll: false });
+      }
     });
   }
   const invalidRange = !!dates.from && !!dates.to && dates.from > dates.to;
   function changeDate(key: 'from' | 'to', value: string) {
     const next = { ...dates, [key]: value };
     setDates(next);
-    if (!next.from || !next.to || next.from <= next.to) update(next);
+    if (!next.from || !next.to || next.from <= next.to) {
+      update(next);
+    }
   }
   return (
     <>

@@ -20,7 +20,9 @@ export async function getPet(id: string) {
       },
     },
   });
-  if (!pet) throw missing();
+  if (!pet) {
+    throw missing();
+  }
   return {
     ...petDto(pet),
     recordCount: pet._count.records,

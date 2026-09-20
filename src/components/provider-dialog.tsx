@@ -84,12 +84,12 @@ export function ProviderDialog({
   };
   function validateField(key: keyof typeof values) {
     const result = providerSchema.shape[key].safeParse(values[key]);
-    if (!result.success)
+    if (!result.success) {
       setErrors((current) => ({
         ...current,
         [key]: result.error.issues.map((issue) => issue.message),
       }));
-    else {
+    } else {
       setValues((current) => ({ ...current, [key]: result.data ?? '' }));
       setErrors((current) => {
         const next = { ...current };
@@ -99,9 +99,14 @@ export function ProviderDialog({
     }
   }
   function close() {
-    if (pending) return;
-    if (dirty) setDiscard(true);
-    else onClose();
+    if (pending) {
+      return;
+    }
+    if (dirty) {
+      setDiscard(true);
+    } else {
+      onClose();
+    }
   }
   async function select(existing: ProviderDto) {
     setPending(true);
@@ -120,14 +125,17 @@ export function ProviderDialog({
     event.preventDefault();
     // Keep submission scoped to the provider form.
     event.stopPropagation();
-    if (pending) return;
+    if (pending) {
+      return;
+    }
     setError('');
     setErrors({});
     const parsed = providerSchema.safeParse(values);
     if (!parsed.success) {
       const fields: FieldErrors = {};
-      for (const issue of parsed.error.issues)
+      for (const issue of parsed.error.issues) {
         (fields[issue.path.join('.')] ??= []).push(issue.message);
+      }
       setErrors(fields);
       focusError(fields, formRef.current);
       return;
@@ -150,7 +158,9 @@ export function ProviderDialog({
       // Another visitor may have created the same provider while this form was open.
       try {
         const response = await fetch('/api/providers?status=all');
-        if (response.ok) setKnownProviders(await response.json());
+        if (response.ok) {
+          setKnownProviders(await response.json());
+        }
       } catch {
         /* Keep the original save error visible. */
       }
@@ -162,7 +172,9 @@ export function ProviderDialog({
       <Dialog
         isOpen
         onOpenChange={(open) => {
-          if (!open) close();
+          if (!open) {
+            close();
+          }
         }}
         aria-labelledby="provider-dialog-title"
         width={560}
@@ -251,7 +263,9 @@ export function ProviderDialog({
                 }));
                 setErrors((current) => {
                   const next = { ...current };
-                  for (const key of ['addressLine1', 'city', 'state', 'zip']) delete next[key];
+                  for (const key of ['addressLine1', 'city', 'state', 'zip']) {
+                    delete next[key];
+                  }
                   return next;
                 });
               }}

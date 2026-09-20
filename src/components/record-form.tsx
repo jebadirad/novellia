@@ -63,9 +63,12 @@ export function RecordForm({
     setNewProviderName(null);
   }
   function changeType(type: RecordType) {
-    if (type === values.type) return;
-    if (Object.values(details).some(Boolean)) setNextType(type);
-    else {
+    if (type === values.type) {
+      return;
+    }
+    if (Object.values(details).some(Boolean)) {
+      setNextType(type);
+    } else {
       set('type', type);
       setDetails({});
       setErrors({});
@@ -74,7 +77,9 @@ export function RecordForm({
   const Fields = recordFieldComponents[values.type];
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (pending) return;
+    if (pending) {
+      return;
+    }
     setErrors({});
     setError('');
     if (followUp && !values.followUpOn) {
@@ -91,8 +96,9 @@ export function RecordForm({
     });
     if (!parsed.success) {
       const fields: FieldErrors = {};
-      for (const issue of parsed.error.issues)
+      for (const issue of parsed.error.issues) {
         (fields[issue.path.join('.')] ??= []).push(issue.message);
+      }
       setErrors(fields);
       focusError(fields);
       return;
@@ -255,7 +261,9 @@ export function RecordForm({
       <AlertDialog
         isOpen={!!nextType}
         onOpenChange={(open) => {
-          if (!open) setNextType(null);
+          if (!open) {
+            setNextType(null);
+          }
         }}
         title="Change record type?"
         description="The type-specific details you entered will be cleared. Your title, dates, clinic, notes, and follow-up will stay."

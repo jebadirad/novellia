@@ -21,8 +21,9 @@ describe('provider validation', () => {
       { phone: 'x'.repeat(81) },
       { archivedAt: new Date().toISOString() },
       { normalizedName: 'injected' },
-    ])
+    ]) {
       expect(providerSchema.safeParse({ name: 'Clinic', ...input }).success).toBe(false);
+    }
   });
   it('accepts optional provider links but rejects free text and malformed IDs', () => {
     const base = {

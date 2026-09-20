@@ -13,7 +13,7 @@
     "start": "next start",
     "postinstall": "prisma generate && npm run theme:build",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "test:integration": "node --env-file=.env.test node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
     "test:e2e": "node --env-file=.env.test node_modules/@playwright/test/cli.js test",
@@ -24,7 +24,8 @@
     "db:reset": "tsx scripts/reset-demo.ts",
     "astryx": "astryx",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "lint:fix": "eslint . --fix --max-warnings=0"
   },
   "dependencies": {
     "@astryxdesign/core": "0.6.2",
@@ -53,6 +54,8 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.5",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react": "7.37.5",
     "postcss": "8.5.28",
     "prettier": "3.9.8",
     "prettier-plugin-tailwindcss": "0.8.1",

@@ -29,17 +29,21 @@ export function useDirtyGuard(dirty: boolean) {
         event.metaKey ||
         event.shiftKey ||
         event.altKey
-      )
+      ) {
         return;
+      }
       const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');
-      if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
+      if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) {
+        return;
+      }
       const url = new URL(anchor.href);
       if (
         url.origin !== location.origin ||
         anchor.getAttribute('href')?.startsWith('#') ||
         url.href === location.href
-      )
+      ) {
         return;
+      }
       event.preventDefault();
       event.stopPropagation();
       setTarget(url.pathname + url.search);
@@ -52,8 +56,11 @@ export function useDirtyGuard(dirty: boolean) {
     };
   }, [dirty]);
   function leave(href: string) {
-    if (dirty && !bypass.current) setTarget(href);
-    else router.push(href);
+    if (dirty && !bypass.current) {
+      setTarget(href);
+    } else {
+      router.push(href);
+    }
   }
   function saved(href: string) {
     bypass.current = true;
@@ -64,7 +71,9 @@ export function useDirtyGuard(dirty: boolean) {
     <AlertDialog
       isOpen={!!target}
       onOpenChange={(open) => {
-        if (!open) setTarget(null);
+        if (!open) {
+          setTarget(null);
+        }
       }}
       title="Discard unsaved changes?"
       description="Your changes have not been saved. Leave this page and discard them?"
@@ -80,7 +89,9 @@ export function useDirtyGuard(dirty: boolean) {
 }
 export function focusError(fields: FieldErrors, scope?: HTMLElement | null) {
   const first = Object.keys(fields)[0];
-  if (!first) return;
+  if (!first) {
+    return;
+  }
   requestAnimationFrame(() => {
     const wrapper = (scope ?? document).querySelector<HTMLElement>(
       `[data-field="${CSS.escape(first)}"]`,

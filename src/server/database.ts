@@ -13,7 +13,9 @@ export const pool =
     idleTimeoutMillis: 5000,
     connectionTimeoutMillis: 10000,
   });
-if (process.env.VERCEL) attachDatabasePool(pool);
+if (process.env.VERCEL) {
+  attachDatabasePool(pool);
+}
 export const prisma = globalDb.novelliaPrisma ?? new PrismaClient({ adapter: new PrismaPg(pool) });
 if (process.env.NODE_ENV !== 'production') {
   globalDb.novelliaPool = pool;

@@ -8,8 +8,8 @@ test('Back and Forward discard an uncommitted search without rewriting history',
   await page.getByRole('combobox', { name: 'Sort records' }).click();
   await page.getByRole('option', { name: 'Oldest first' }).click();
   await expect(page).toHaveURL(/q=original&sort=oldest/);
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  await page.clock.install({ time: new Date('2026-09-20T12:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-09-20T12:01:00Z'));
   await search.fill('abandoned back search');
   await page.goBack();
   await expect(search).toHaveValue('original');
@@ -26,8 +26,8 @@ test('select changes include pending search text and clear cancels it', async ({
   await page.goto('/records?q=original&page=2');
   const search = page.getByRole('textbox', { name: 'Search records' });
   await expect(search).toHaveValue('original');
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  await page.clock.install({ time: new Date('2026-09-20T12:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-09-20T12:01:00Z'));
   await search.fill('updated');
   await page.getByRole('combobox', { name: 'Sort records' }).click();
   await page.getByRole('option', { name: 'Oldest first' }).click();
@@ -60,8 +60,8 @@ test('an earlier search response does not erase newer typing', async ({ page }) 
     }
     await route.continue();
   });
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  await page.clock.install({ time: new Date('2026-09-20T12:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-09-20T12:01:00Z'));
   await search.fill('first');
   await page.clock.runFor(301);
   await started;

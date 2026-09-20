@@ -70,8 +70,9 @@ export function formatUsPhone(input: string): string | null {
   if (
     !match ||
     !/^(?:\+?1[\s.-]*)?(?:\([2-9]\d{2}\)|[2-9]\d{2})[\s.-]*[2-9]\d{2}[\s.-]*\d{4}$/.test(match[1])
-  )
+  ) {
     return null;
+  }
   const digits = match[1].replace(/\D/g, '').slice(-10);
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}${match[2] ? ` ext. ${match[2]}` : ''}`;
 }

@@ -19,7 +19,9 @@ export function toDate(day: string | null | undefined): Date | null {
   return day ? new Date(`${day}T00:00:00Z`) : null;
 }
 export function formatDate(day: string | null, compact = false): string {
-  if (!day) return 'Not recorded';
+  if (!day) {
+    return 'Not recorded';
+  }
   return new Intl.DateTimeFormat('en-US', {
     timeZone: 'UTC',
     month: compact ? 'short' : 'long',
@@ -28,12 +30,16 @@ export function formatDate(day: string | null, compact = false): string {
   }).format(toDate(day)!);
 }
 export function petAge(birthDate: string | null, today: string): string {
-  if (!birthDate) return 'Age unknown';
+  if (!birthDate) {
+    return 'Age unknown';
+  }
   const [year, month, day] = birthDate.split('-').map(Number);
   const [thisYear, thisMonth, thisDay] = today.split('-').map(Number);
   const years =
     thisYear - year - (thisMonth < month || (thisMonth === month && thisDay < day) ? 1 : 0);
-  if (years >= 1) return `${years} ${years === 1 ? 'year' : 'years'} old`;
+  if (years >= 1) {
+    return `${years} ${years === 1 ? 'year' : 'years'} old`;
+  }
   const months = (thisYear - year) * 12 + thisMonth - month - (thisDay < day ? 1 : 0);
   return months > 0
     ? `${months} ${months === 1 ? 'month' : 'months'} old`
@@ -41,9 +47,15 @@ export function petAge(birthDate: string | null, today: string): string {
 }
 export type FollowUpGroup = 'overdue' | 'today' | 'soon' | 'later' | 'completed';
 export function followUpGroup(due: string, completed: string | null, today: string): FollowUpGroup {
-  if (completed) return 'completed';
-  if (due < today) return 'overdue';
-  if (due === today) return 'today';
+  if (completed) {
+    return 'completed';
+  }
+  if (due < today) {
+    return 'overdue';
+  }
+  if (due === today) {
+    return 'today';
+  }
   return due <= addDays(today, 30) ? 'soon' : 'later';
 }
 export const followUpLabels: Record<FollowUpGroup, string> = {

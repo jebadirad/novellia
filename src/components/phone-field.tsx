@@ -40,16 +40,24 @@ export function PhoneField({
         onKeyDown={(event) => {
           const element = event.currentTarget;
           const start = element.selectionStart ?? 0;
-          if (start !== element.selectionEnd || event.altKey || event.ctrlKey || event.metaKey)
+          if (start !== element.selectionEnd || event.altKey || event.ctrlKey || event.metaKey) {
             return;
+          }
           // Skip mask punctuation when deleting, so separators never trap the cursor.
           const direction = event.key === 'Backspace' ? -1 : event.key === 'Delete' ? 1 : 0;
-          if (!direction) return;
+          if (!direction) {
+            return;
+          }
           let index = direction < 0 ? start - 1 : start;
-          if (!/[()\s-]/.test(value[index] ?? '') || /[ex#]/i.test(value.slice(0, start))) return;
-          while (index >= 0 && index < value.length && /[()\s-]/.test(value[index]))
+          if (!/[()\s-]/.test(value[index] ?? '') || /[ex#]/i.test(value.slice(0, start))) {
+            return;
+          }
+          while (index >= 0 && index < value.length && /[()\s-]/.test(value[index])) {
             index += direction;
-          if (index < 0 || index >= value.length || !/\d/.test(value[index])) return;
+          }
+          if (index < 0 || index >= value.length || !/\d/.test(value[index])) {
+            return;
+          }
           event.preventDefault();
           update(value.slice(0, index) + value.slice(index + 1), direction < 0 ? index : start);
         }}

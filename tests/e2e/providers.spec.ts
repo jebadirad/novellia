@@ -14,7 +14,9 @@ test.beforeEach(async ({ request }) => {
 });
 test.afterEach(async ({ request }) => {
   await request.delete(`/api/pets/${petId}`);
-  for (const id of providerIds) await request.delete(`/api/providers/${id}`);
+  for (const id of providerIds) {
+    await request.delete(`/api/providers/${id}`);
+  }
 });
 
 test('validates contact fields, fills structured suggestions, and saves without lookup', async ({
@@ -135,9 +137,11 @@ test('inline creation preserves the record, handles failed saves, and selects ex
   await expect(dialog.getByRole('textbox', { name: 'Provider notes' })).toBeFocused();
   await dialog.getByRole('textbox', { name: 'Provider notes' }).fill('');
   await page.route('**/api/providers', async (route) => {
-    if (route.request().method() === 'POST')
+    if (route.request().method() === 'POST') {
       await route.fulfill({ status: 500, json: { error: { message: 'Provider save failed' } } });
-    else await route.continue();
+    } else {
+      await route.continue();
+    }
   });
   await dialog.getByRole('button', { name: 'Add provider', exact: true }).click();
   await expect(dialog.getByRole('alert')).toContainText('Provider save failed');

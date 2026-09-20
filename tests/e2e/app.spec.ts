@@ -44,12 +44,15 @@ for (const type of ['Vet visit', 'Vaccination', 'Medication']) {
     await page.goto(`/pets/${petId}/records/new`);
     await page.getByRole('button', { name: new RegExp(`^${type}`) }).click();
     await page.getByRole('textbox', { name: 'Title', exact: true }).fill(`${type} browser record`);
-    if (type === 'Vet visit')
+    if (type === 'Vet visit') {
       await page.getByRole('textbox', { name: 'Reason for visit' }).fill('Annual checkup');
-    if (type === 'Vaccination')
+    }
+    if (type === 'Vaccination') {
       await page.getByRole('textbox', { name: 'Vaccine name' }).fill('Rabies');
-    if (type === 'Medication')
+    }
+    if (type === 'Medication') {
       await page.getByRole('textbox', { name: 'Medication name' }).fill('Example drops');
+    }
     await page.getByRole('checkbox', { name: 'Add a follow-up' }).check();
     await page.getByLabel('Follow-up date', { exact: true }).fill(addDays(today, 2));
     await page.getByRole('textbox', { name: 'What needs to happen?' }).fill('Call clinic');

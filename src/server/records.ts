@@ -12,7 +12,9 @@ export async function getRecord(petId: string, id: string) {
     where: { id, petId },
     include: { pet: true, provider: true },
   });
-  if (!record) throw missing();
+  if (!record) {
+    throw missing();
+  }
   return recordDto(record);
 }
 export async function listRecords(query: RecordQuery) {
@@ -57,8 +59,9 @@ function recordData(input: RecordInput) {
   };
 }
 export async function createRecord(petId: string, input: RecordInput) {
-  if (!(await prisma.pet.findUnique({ where: { id: petId }, select: { id: true } })))
+  if (!(await prisma.pet.findUnique({ where: { id: petId }, select: { id: true } }))) {
     throw missing();
+  }
   return prisma.$transaction(async (tx) => {
     await validateRecordProvider(tx, input.providerId);
     return recordDto(
@@ -72,9 +75,12 @@ export async function createRecord(petId: string, input: RecordInput) {
 export async function updateRecord(petId: string, id: string, input: RecordInput) {
   return prisma.$transaction(async (tx) => {
     const existing = await tx.medicalRecord.findFirst({ where: { id, petId } });
-    if (!existing) throw missing();
-    if (existing.type !== input.type)
+    if (!existing) {
+      throw missing();
+    }
+    if (existing.type !== input.type) {
       throw new AppError(422, 'IMMUTABLE_TYPE', 'A saved record’s type cannot be changed.');
+    }
     await validateRecordProvider(tx, input.providerId, existing.providerId);
     const clearCompletion = !input.followUpOn || input.followUpOn !== dateOnly(existing.followUpOn);
     const saved = await tx.medicalRecord.update({
@@ -100,7 +106,8 @@ export async function setFollowUpCompleted(petId: string, id: string, completed:
     data: { followUpCompletedAt: completed ? new Date() : null },
   });
   const record = await getRecord(petId, id);
-  if (!record.followUpOn)
+  if (!record.followUpOn) {
     throw new AppError(422, 'NO_FOLLOW_UP', 'This record does not have a follow-up.');
+  }
   return record;
 }

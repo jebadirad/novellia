@@ -190,10 +190,11 @@ describe('database workflows', () => {
         })
       ).name,
     ).toBe('Edited Luna');
-    for (let i = 0; i < 22; i++)
+    for (let i = 0; i < 22; i++) {
       await createPet(
         petInputSchema(day).parse({ name: `Test ${String(i).padStart(2, '0')}`, species: 'cat' }),
       );
+    }
     const one = await listPets({ q: 'Test', page: 1 });
     const two = await listPets({ q: 'Test', page: 2 });
     expect(one.items).toHaveLength(20);

@@ -134,7 +134,9 @@ export function ProviderActions({
   const router = useRouter();
   const toast = useToast();
   async function archive() {
-    if (pending) return;
+    if (pending) {
+      return;
+    }
     setPending(true);
     setError('');
     try {
@@ -187,7 +189,9 @@ export function ProviderActions({
       <AlertDialog
         isOpen={confirm}
         onOpenChange={(open) => {
-          if (!pending) setConfirm(open);
+          if (!pending) {
+            setConfirm(open);
+          }
         }}
         title={provider.archivedAt ? 'Restore provider?' : 'Archive provider?'}
         description={`${provider.archivedAt ? 'Make' : 'Hide'} ${provider.name} ${provider.archivedAt ? 'available for new records again.' : 'from new selections.'} All ${provider.recordCount} linked records will stay.${error ? ` ${error}` : ''}`}

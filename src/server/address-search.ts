@@ -26,7 +26,9 @@ export function photonSuggestions(payload: unknown): AddressSuggestion[] {
   return result.features
     .flatMap(({ properties: p }, index) => {
       // Never put a city, business name, or county into the street-address field.
-      if (p.countrycode?.toUpperCase() !== 'US' || !p.street) return [];
+      if (p.countrycode?.toUpperCase() !== 'US' || !p.street) {
+        return [];
+      }
       const state =
         Object.entries(usStates).find(
           ([code, name]) =>
@@ -68,7 +70,9 @@ export async function searchAddresses(query: string): Promise<AddressSuggestion[
       signal: AbortSignal.timeout(5000),
       next: { revalidate: 86400 },
     });
-    if (!response.ok) throw new Error('Address service unavailable');
+    if (!response.ok) {
+      throw new Error('Address service unavailable');
+    }
     return photonSuggestions(await response.json());
   } catch {
     throw new AppError(

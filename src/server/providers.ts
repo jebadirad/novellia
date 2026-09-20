@@ -22,7 +22,9 @@ export async function listProviders(query: ProviderQuery) {
 }
 export async function getProvider(id: string) {
   const provider = await prisma.careProvider.findUnique({ where: { id }, include: counts });
-  if (!provider) throw missing();
+  if (!provider) {
+    throw missing();
+  }
   return providerDto(provider);
 }
 function duplicate(error: unknown): never {
@@ -77,12 +79,13 @@ export async function deleteProvider(id: string) {
     // linked concurrently after the UI displayed a zero record count.
     await prisma.careProvider.delete({ where: { id } });
   } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2003')
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2003') {
       throw new AppError(
         409,
         'PROVIDER_IN_USE',
         'This provider has linked medical records. Archive it instead.',
       );
+    }
     throw error;
   }
 }
@@ -91,17 +94,20 @@ export async function validateRecordProvider(
   id: string | null,
   previousId?: string | null,
 ) {
-  if (!id) return;
+  if (!id) {
+    return;
+  }
   // Serialize assignment with archive/delete so an archived provider cannot
   // acquire new records. Existing historical links can still be retained.
   const rows = await tx.$queryRaw<{ archivedAt: Date | null }[]>`
     SELECT "archivedAt" FROM "CareProvider" WHERE "id" = ${id}::uuid FOR UPDATE
   `;
   const provider = rows[0];
-  if (!provider || (provider.archivedAt && id !== previousId))
+  if (!provider || (provider.archivedAt && id !== previousId)) {
     throw new AppError(422, 'INVALID_PROVIDER', 'Choose an active provider.', {
       providerId: [
         'This provider is unavailable. Choose an active provider or clear the selection.',
       ],
     });
+  }
 }

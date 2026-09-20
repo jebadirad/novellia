@@ -107,28 +107,31 @@ export const recordMeta = {
 >;
 export function recordInputSchema(today: string) {
   return recordSchema.superRefine((value, ctx) => {
-    if (value.occurredOn > today)
+    if (value.occurredOn > today) {
       ctx.addIssue({
         code: 'custom',
         path: ['occurredOn'],
         message: 'The record date cannot be in the future.',
       });
-    if (value.followUpOn && value.followUpOn < value.occurredOn)
+    }
+    if (value.followUpOn && value.followUpOn < value.occurredOn) {
       ctx.addIssue({
         code: 'custom',
         path: ['followUpOn'],
         message: 'Follow-up must be on or after the record date.',
       });
+    }
     if (
       value.type === 'medication' &&
       value.details.endDate &&
       value.details.endDate < value.occurredOn
-    )
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['details', 'endDate'],
         message: 'End date must be on or after the prescribed date.',
       });
+    }
   });
 }
 export const followUpSchema = z.strictObject({ completed: z.boolean() });

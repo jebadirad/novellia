@@ -168,7 +168,9 @@ export async function seedDemo(
     },
   ];
   await db.$transaction(async (tx) => {
-    for (const pet of pets) await tx.pet.upsert({ where: { id: pet.id }, create: pet, update: {} });
+    for (const pet of pets) {
+      await tx.pet.upsert({ where: { id: pet.id }, create: pet, update: {} });
+    }
     const providers = await Promise.all(
       ['Green Valley Animal Care', 'Willow Creek Veterinary'].map(async (name) => {
         const normalizedName = normalizeProviderName(name);

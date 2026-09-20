@@ -49,7 +49,7 @@ export function Breadcrumbs({ items }: { items: { label: string; href?: string }
       className="mb-5.5 flex flex-wrap gap-2 text-xs text-secondary [&_a:hover]:text-accent [&_a:hover]:underline"
     >
       {items.map((item, i) => (
-        <span key={i}>
+        <span key={item.href ?? item.label}>
           {i > 0 && (
             <span aria-hidden="true" className="mr-2 text-secondary">
               /
@@ -106,7 +106,9 @@ export function TypeBadge({ type }: { type: RecordDto['type'] }) {
   );
 }
 export function DueBadge({ record, today }: { record: RecordDto; today: string }) {
-  if (!record.followUpOn) return null;
+  if (!record.followUpOn) {
+    return null;
+  }
   const group = followUpGroup(record.followUpOn, record.followUpCompletedAt, today);
   return (
     <Badge
@@ -264,7 +266,9 @@ export function RecordTable({ records }: { records: RecordDto[] }) {
                 <th scope="row" className="min-w-45 px-5 py-4.5 font-semibold wrap-anywhere">
                   <Link href={recordHref(record)}>{record.title}</Link>
                 </th>
-                <td className="px-5 py-4.5 text-secondary">{record.provider?.name || 'Not recorded'}</td>
+                <td className="px-5 py-4.5 text-secondary">
+                  {record.provider?.name || 'Not recorded'}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -338,10 +342,16 @@ export function Pagination({
   params: SearchParams;
   path: string;
 }) {
-  if (result.total <= result.pageSize && result.page === 1) return null;
+  if (result.total <= result.pageSize && result.page === 1) {
+    return null;
+  }
   const url = (page: number) => {
     const q = new URLSearchParams();
-    for (const [k, v] of Object.entries(params)) if (typeof v === 'string' && v) q.set(k, v);
+    for (const [k, v] of Object.entries(params)) {
+      if (typeof v === 'string' && v) {
+        q.set(k, v);
+      }
+    }
     q.set('page', String(page));
     return `${path}?${q}`;
   };

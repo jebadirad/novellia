@@ -44,10 +44,11 @@ describe('input validation', () => {
       { birthDate: '2026-09-19' },
       { birthDate: '2025-02-29' },
       { id: 'injected' },
-    ])
+    ]) {
       expect(
         petInputSchema(day).safeParse({ name: 'Luna', species: 'dog', ...fields }).success,
       ).toBe(false);
+    }
   });
   it('requires the correct type-specific fields', () => {
     expect(recordInputSchema(day).safeParse(base).success).toBe(true);

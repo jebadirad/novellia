@@ -21,12 +21,15 @@ export function AddressPicker({ onSelect }: { onSelect: (address: AddressSuggest
           const response = await fetch(`/api/address-suggestions?q=${encodeURIComponent(query)}`, {
             signal: request.signal,
           });
-          if (!response.ok) throw new Error('Search unavailable');
+          if (!response.ok) {
+            throw new Error('Search unavailable');
+          }
           const result = await response.json();
           return request.signal.aborted ? [] : result.suggestions;
         } catch {
-          if (!request.signal.aborted)
+          if (!request.signal.aborted) {
             setError('Address search is unavailable. You can still enter the address below.');
+          }
           return [];
         }
       },
@@ -51,7 +54,9 @@ export function AddressPicker({ onSelect }: { onSelect: (address: AddressSuggest
         }}
         onChange={(address) => {
           setSelected(address);
-          if (address) onSelect(address);
+          if (address) {
+            onSelect(address);
+          }
         }}
         emptySearchResultsText="No matching street addresses. Enter the details below."
       />

@@ -29,14 +29,17 @@ export function PetForm({ pet, today }: { pet?: PetDto; today: string }) {
     setValues((current) => ({ ...current, [field]: value }));
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (pending) return;
+    if (pending) {
+      return;
+    }
     setErrors({});
     setError('');
     const parsed = petInputSchema(today).safeParse(values);
     if (!parsed.success) {
       const fields: FieldErrors = {};
-      for (const issue of parsed.error.issues)
+      for (const issue of parsed.error.issues) {
         (fields[issue.path.join('.')] ??= []).push(issue.message);
+      }
       setErrors(fields);
       focusError(fields);
       return;
@@ -113,7 +116,9 @@ export function PetForm({ pet, today }: { pet?: PetDto; today: string }) {
                   value={unknownBirth}
                   onChange={(value) => {
                     setUnknownBirth(value);
-                    if (value) set('birthDate', '');
+                    if (value) {
+                      set('birthDate', '');
+                    }
                   }}
                 />
                 {!unknownBirth && (
