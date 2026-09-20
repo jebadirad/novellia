@@ -6,7 +6,6 @@ import { followUpGroup, followUpLabels, type FollowUpGroup } from '@/domain/date
 import { followUpQuerySchema, cleanQuery, type SearchParams } from '@/domain/schemas';
 import { PageHeading, Panel, FollowUpList, EmptyState } from '@/components/display';
 import { Filters } from '@/components/filters';
-import s from '@/components/styles.module.css';
 export const metadata = { title: 'Follow-ups' };
 export default async function FollowUps({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -25,17 +24,17 @@ export default async function FollowUps({ searchParams }: { searchParams: Promis
         subtitle="Keep track of the next step in their care."
         eyebrow="FOLLOW-UPS"
       />
-      <div className={s.tabs}>
+      <div className="mb-5.5 flex gap-2">
         <Link
           href={`/follow-ups?tab=open${petQuery}`}
-          className={`${s.tab} ${!completed ? s.tabActive : ''}`}
+          className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-secondary aria-[current=page]:border-border-strong aria-[current=page]:bg-accent-muted aria-[current=page]:text-accent"
           aria-current={!completed ? 'page' : undefined}
         >
           Open follow-ups
         </Link>
         <Link
           href={`/follow-ups?tab=completed${petQuery}`}
-          className={`${s.tab} ${completed ? s.tabActive : ''}`}
+          className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-secondary aria-[current=page]:border-border-strong aria-[current=page]:bg-accent-muted aria-[current=page]:text-accent"
           aria-current={completed ? 'page' : undefined}
         >
           Completed
@@ -43,14 +42,17 @@ export default async function FollowUps({ searchParams }: { searchParams: Promis
       </div>
       <Filters kind="follow-ups" pets={pets} />
       {params.group && (
-        <p className={s.sectionIntro}>
+        <p className="mb-4 text-xs text-secondary">
           {params.group === 'overdue'
             ? 'Showing overdue follow-ups.'
             : 'Showing follow-ups due today through the next 30 days.'}
         </p>
       )}
       {!parsed.success ? (
-        <p role="alert" className={s.queryError}>
+        <p
+          role="alert"
+          className="mb-5 rounded-md border border-care-error-border bg-care-error px-4 py-3 text-sm text-care-error-text"
+        >
           {parsed.error.issues[0].message}
         </p>
       ) : records.length ? (
@@ -60,7 +62,10 @@ export default async function FollowUps({ searchParams }: { searchParams: Promis
               followUpGroup(record.followUpOn!, record.followUpCompletedAt, day) === group,
           );
           return items.length ? (
-            <section className={s.followGroup} key={group}>
+            <section
+              className="mt-6 [&>h2]:mb-3 [&>h2]:text-xs [&>h2]:font-semibold [&>h2]:tracking-wide [&>h2]:text-secondary"
+              key={group}
+            >
               <h2>
                 {followUpLabels[group]} · {items.length}
               </h2>

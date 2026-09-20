@@ -47,6 +47,18 @@ Server-rendered pages call services directly. Mutations use JSON endpoints. Ther
 
 Start with [the design document](docs/design.md), then [the code walkthrough](docs/walkthrough.md).
 
+## Styling
+
+Astryx owns the UI components; Tailwind CSS v4 owns application layouts and custom styling. Both use the same design tokens through Astryx's official Tailwind bridge.
+
+- Change brand values in `src/theme/novellia.ts`, which extends Astryx's neutral theme.
+- Use semantic utilities such as `bg-surface`, `text-primary`, `border-border`, and `rounded-lg` in JSX.
+- Use Astryx component props such as `variant="primary"` and `size="lg"` for built-in appearance.
+- Use responsive utilities for layout and extract repeated UI into React components.
+- Run `npm run theme:build` after editing theme values; startup, installation, and production builds also run it automatically.
+
+The generated theme provides styling on the initial server-rendered page. `globals.css` contains the cascade order, Astryx token bridge, a few app-specific token aliases, and base rules. CSS Modules and application inline style objects have been removed. Prettier sorts Tailwind classes automatically.
+
 ## Important behavior
 
 - Three record types: vet visit, vaccination, medication.

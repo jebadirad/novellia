@@ -8,7 +8,6 @@ import { petInputSchema, speciesLabels, type Species } from '@/domain/schemas';
 import type { PetDto, FieldErrors } from '@/domain/types';
 import { TextField, CalendarField, NotesField, focusError, useDirtyGuard } from './form-tools';
 import { mutate, RequestError } from './actions';
-import s from './styles.module.css';
 export function PetForm({ pet, today }: { pet?: PetDto; today: string }) {
   const initial = {
     name: pet?.name ?? '',
@@ -62,17 +61,20 @@ export function PetForm({ pet, today }: { pet?: PetDto; today: string }) {
   }
   return (
     <>
-      <form className={s.form} onSubmit={submit} noValidate>
+      <form className="flex max-w-180 flex-col gap-5.5" onSubmit={submit} noValidate>
         {error && (
-          <div role="alert" className={s.formError}>
+          <div
+            role="alert"
+            className="rounded-md border border-care-error-border bg-care-error px-4.5 py-3.5 text-sm text-care-error-text"
+          >
             {error}
           </div>
         )}
-        <section className={s.formSection}>
+        <section className="rounded-lg border border-border bg-surface px-4.5 py-5 md:p-7 [&>h2]:mb-1 [&>h2]:text-base [&>h2]:font-semibold [&>p]:mb-5.5 [&>p]:text-xs [&>p]:text-secondary">
           <h2>A little about your pet</h2>
           <p>Start with the basics. You can add more information anytime.</p>
-          <div className={s.formFields}>
-            <div className={s.twoColumns}>
+          <div className="flex flex-col gap-5 md:gap-5.5">
+            <div className="grid grid-cols-1 gap-5.5 md:grid-cols-2">
               <TextField
                 name="name"
                 label="Pet name"
@@ -104,7 +106,7 @@ export function PetForm({ pet, today }: { pet?: PetDto; today: string }) {
               optional
               placeholder="e.g. Labrador Retriever"
             />
-            <div className={s.twoColumns}>
+            <div className="grid grid-cols-1 gap-5.5 md:grid-cols-2">
               <div>
                 <CheckboxInput
                   label="Birth date unknown"
@@ -148,7 +150,7 @@ export function PetForm({ pet, today }: { pet?: PetDto; today: string }) {
             />
           </div>
         </section>
-        <div className={s.formActions}>
+        <div className="flex justify-end gap-3 pt-1 pb-3">
           <Button
             label="Cancel"
             onClick={() => guard.leave(pet ? `/pets/${pet.id}` : '/pets')}

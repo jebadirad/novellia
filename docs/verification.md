@@ -2,6 +2,12 @@
 
 Verified locally on September 18, 2026. This file distinguishes local evidence from hosted deployment, which is still pending.
 
+## Tailwind migration — September 19, 2026
+
+Replaced the application CSS Module and inline style objects with Tailwind CSS v4 utilities. Astryx components keep their native variants and theme styling. The custom theme in `src/theme/novellia.ts` is compiled for SSR, and Astryx's official Tailwind bridge exposes its colors, typography, spacing, and radii to application utilities. Additional avatar and decorative tokens are defined in the same theme.
+
+The production build, TypeScript, lint, formatting, and all 13 Playwright tests passed after conversion. Populated desktop and mobile screens passed axe checks and were visually reviewed; workflow layout checks covered 375, 768, and 1440 pixels. The theme build's `--check` verified that generated artifacts match their source. No CSS Module imports, component stylesheets, raw color values in JSX, or application `style` props remain. `npm audit` reported zero known vulnerabilities.
+
 ## Completed
 
 | Check                   | Evidence                                                                                                                                                                                                                                                                                                 |

@@ -15,7 +15,6 @@ import {
 import { RecordDetails } from '@/components/record-details';
 import { DeleteAction, FollowUpAction } from '@/components/actions';
 import { Button } from '@/components/ui';
-import s from '@/components/styles.module.css';
 export default async function RecordPage({
   params,
 }: {
@@ -33,9 +32,9 @@ export default async function RecordPage({
           { label: record.title },
         ]}
       />
-      <div className={s.recordHeader}>
+      <div className="mb-4 flex flex-wrap items-center gap-3 md:flex-nowrap">
         <TypeBadge type={record.type} />
-        <div className={s.headingAction}>
+        <div className="ml-auto flex shrink-0 items-center gap-2.5">
           <Button href={`${href}/edit`} label="Edit record" />
           <DeleteAction
             overflow
@@ -50,11 +49,11 @@ export default async function RecordPage({
         title={record.title}
         subtitle={`${record.pet.name} · ${formatDate(record.occurredOn)}`}
       />
-      <div className={s.detailLayout}>
-        <div className={s.stack}>
+      <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,1fr)_250px] desk:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-5.5">
           <Panel title="Record details">
-            <div className={s.panelBody}>
-              <dl className={s.detailGrid}>
+            <div className="p-5 md:p-6">
+              <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-1.5 md:gap-x-7">
                 <DetailField label="Pet">
                   <Link href={`/pets/${petId}`}>{record.pet.name}</Link>
                 </DetailField>
@@ -67,22 +66,22 @@ export default async function RecordPage({
             </div>
           </Panel>
           <Panel title="Additional notes">
-            <div className={s.panelBody}>
-              <p className={s.noteText}>{record.notes || 'No additional notes recorded.'}</p>
+            <div className="p-5 md:p-6">
+              <p className="text-sm leading-relaxed wrap-anywhere whitespace-pre-wrap text-secondary">
+                {record.notes || 'No additional notes recorded.'}
+              </p>
             </div>
           </Panel>
         </div>
         <Panel title="What happens next">
-          <div className={s.panelBody}>
+          <div className="p-5 md:p-6">
             {record.followUpOn ? (
               <>
                 <DueBadge record={record} today={today()} />
-                <h3 style={{ margin: '15px 0 8px', fontSize: 17 }}>
-                  {record.followUpNote || record.title}
-                </h3>
-                <p className={s.sectionIntro}>Due {formatDate(record.followUpOn)}</p>
+                <h3 className="mt-4 mb-2 text-lg">{record.followUpNote || record.title}</h3>
+                <p className="mb-4 text-xs text-secondary">Due {formatDate(record.followUpOn)}</p>
                 {record.followUpCompletedAt && (
-                  <p className={s.sectionIntro}>
+                  <p className="mb-4 text-xs text-secondary">
                     Completed {formatDate(record.followUpCompletedAt.slice(0, 10))}
                   </p>
                 )}
@@ -90,14 +89,14 @@ export default async function RecordPage({
               </>
             ) : (
               <>
-                <p className={s.sectionIntro}>No follow-up added to this record.</p>
+                <p className="mb-4 text-xs text-secondary">No follow-up added to this record.</p>
                 <Button label="Add a follow-up" href={`${href}/edit`} />
               </>
             )}
           </div>
         </Panel>
       </div>
-      <p className={s.metadata}>
+      <p className="px-1 py-4.5 text-xs text-secondary">
         Added {formatDate(record.createdAt.slice(0, 10))} · Updated{' '}
         {formatDate(record.updatedAt.slice(0, 10))}
       </p>

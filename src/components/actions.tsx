@@ -8,7 +8,6 @@ import { Dialog } from '@astryxdesign/core/Dialog';
 import { useToast } from '@astryxdesign/core/Toast';
 import { Plus, Check, ArrowRight, MoreHorizontal } from 'lucide-react';
 import type { RecordDto, FieldErrors } from '@/domain/types';
-import s from './styles.module.css';
 
 export class RequestError extends Error {
   constructor(
@@ -60,7 +59,7 @@ export function FollowUpAction({ record }: { record: RecordDto }) {
     }
   }
   return (
-    <div className={s.followAction}>
+    <div className="max-md:group-[]/follow:ml-14 max-md:group-[]/follow:items-start flex max-w-48 flex-col items-end">
       <Button
         label={record.followUpCompletedAt ? 'Reopen' : 'Mark complete'}
         size="sm"
@@ -69,7 +68,7 @@ export function FollowUpAction({ record }: { record: RecordDto }) {
         isLoading={pending}
       />
       {error && (
-        <p role="alert" className={s.inlineError}>
+        <p role="alert" className="mt-2 text-xs text-care-error-text">
           {error}
         </p>
       )}
@@ -115,10 +114,7 @@ export function DeleteAction({
     <>
       {overflow ? (
         <details>
-          <summary
-            aria-label="Record actions"
-            style={{ cursor: 'pointer', listStyle: 'none', padding: 7 }}
-          >
+          <summary aria-label="Record actions" className="cursor-pointer list-none p-2">
             <MoreHorizontal size={22} />
           </summary>
           {trigger}
@@ -138,7 +134,7 @@ export function DeleteAction({
         onAction={remove}
       />
       {error && (
-        <p className={s.inlineError} role="alert">
+        <p className="mt-2 text-xs text-care-error-text" role="alert">
           {error}
         </p>
       )}
@@ -182,14 +178,14 @@ export function AddRecordButton({
         onClick={() => setOpen(true)}
       />
       <Dialog isOpen={open} onOpenChange={setOpen} aria-labelledby="pet-picker-heading" width={460}>
-        <div className={s.picker}>
+        <div className="flex flex-col gap-2.5 p-5.5">
           <h2 id="pet-picker-heading">Who is this record for?</h2>
-          <p className={s.muted}>Choose a pet to add to their medical history.</p>
+          <p className="text-xs text-secondary">Choose a pet to add to their medical history.</p>
           {pets.map((pet) => (
             <Link
               key={pet.id}
               href={`/pets/${pet.id}/records/new`}
-              className={s.pickPet}
+              className="flex items-center gap-3 rounded-md border border-border p-3 hover:bg-muted [&>svg:last-child]:ml-auto"
               onClick={() => setOpen(false)}
             >
               <span>{pet.name}</span>

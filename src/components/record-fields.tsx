@@ -2,7 +2,6 @@
 import type { FieldErrors } from '@/domain/types';
 import type { RecordType } from '@/domain/schemas';
 import { CalendarField, NotesField, TextField } from './form-tools';
-import s from './styles.module.css';
 type Props = {
   values: Record<string, string>;
   set: (name: string, value: string) => void;
@@ -32,7 +31,7 @@ function VisitFields({ values, set, errors }: Props) {
 }
 function VaccinationFields({ values, set, errors }: Props) {
   return (
-    <div className={s.twoColumns}>
+    <div className="grid grid-cols-1 gap-5.5 md:grid-cols-2">
       <TextField
         name="details.vaccineName"
         label="Vaccine name"
@@ -61,7 +60,7 @@ function MedicationFields({ values, set, errors, occurredOn }: Props) {
         onChange={(v) => set('medicationName', v)}
         errors={errors}
       />
-      <div className={s.twoColumns}>
+      <div className="grid grid-cols-1 gap-5.5 md:grid-cols-2">
         <TextField
           name="details.dose"
           label="Dose"

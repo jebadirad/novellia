@@ -7,7 +7,6 @@ import { DateInput } from '@astryxdesign/core/DateInput';
 import type { ISODateString } from '@astryxdesign/core/Calendar';
 import { Button } from '@astryxdesign/core/Button';
 import { recordTypes, recordMeta, speciesLabels } from '@/domain/schemas';
-import s from './styles.module.css';
 export function Filters({
   kind,
   pets = [],
@@ -63,9 +62,12 @@ export function Filters({
   }
   return (
     <>
-      <div className={s.toolbar} aria-busy={pending}>
+      <div
+        className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-3.5 md:px-5 md:py-4"
+        aria-busy={pending}
+      >
         {kind !== 'follow-ups' && (
-          <div className={s.searchField}>
+          <div className="w-full min-w-full flex-1 md:w-auto md:min-w-50">
             <TextInput
               label={kind === 'pets' ? 'Search pets' : 'Search records'}
               isLabelHidden
@@ -85,7 +87,7 @@ export function Filters({
           </div>
         )}
         {kind === 'pets' && (
-          <div className={s.filterField}>
+          <div className="min-w-32 flex-1 md:min-w-36 md:flex-[0_1_160px]">
             <Selector
               label="Species filter"
               isLabelHidden
@@ -101,7 +103,7 @@ export function Filters({
           </div>
         )}
         {kind !== 'pets' && !scoped && (
-          <div className={s.filterField}>
+          <div className="min-w-32 flex-1 md:min-w-36 md:flex-[0_1_160px]">
             <Selector
               label="Pet filter"
               isLabelHidden
@@ -118,7 +120,7 @@ export function Filters({
         )}
         {kind === 'records' && (
           <>
-            <div className={s.filterField}>
+            <div className="min-w-32 flex-1 md:min-w-36 md:flex-[0_1_160px]">
               <Selector
                 label="Record type filter"
                 isLabelHidden
@@ -132,7 +134,7 @@ export function Filters({
                 size="lg"
               />
             </div>
-            <div className={s.filterDate}>
+            <div className="min-w-0 flex-[1_0_100%] md:min-w-45 md:flex-[0_1_190px]">
               <DateInput
                 label="From date"
                 value={(dates.from || undefined) as ISODateString | undefined}
@@ -143,7 +145,7 @@ export function Filters({
                 width="100%"
               />
             </div>
-            <div className={s.filterDate}>
+            <div className="min-w-0 flex-[1_0_100%] md:min-w-45 md:flex-[0_1_190px]">
               <DateInput
                 label="To date"
                 value={(dates.to || undefined) as ISODateString | undefined}
@@ -154,7 +156,7 @@ export function Filters({
                 width="100%"
               />
             </div>
-            <div className={s.filterField}>
+            <div className="min-w-32 flex-1 md:min-w-36 md:flex-[0_1_160px]">
               <Selector
                 label="Sort records"
                 isLabelHidden
@@ -186,7 +188,10 @@ export function Filters({
         )}
       </div>
       {invalidRange && (
-        <p role="alert" className={s.queryError}>
+        <p
+          role="alert"
+          className="mb-5 rounded-md border border-care-error-border bg-care-error px-4 py-3 text-sm text-care-error-text"
+        >
           End date must be on or after start date.
         </p>
       )}

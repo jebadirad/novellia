@@ -4,7 +4,6 @@ import { recordQuerySchema, cleanQuery, type SearchParams } from '@/domain/schem
 import { PageHeading, Panel, RecordTable, EmptyState, Pagination } from '@/components/display';
 import { AddRecordButton } from '@/components/actions';
 import { Filters } from '@/components/filters';
-import s from '@/components/styles.module.css';
 export const metadata = { title: 'Medical records' };
 export default async function RecordsPage({
   searchParams,
@@ -26,7 +25,10 @@ export default async function RecordsPage({
       />
       <Filters kind="records" pets={pets} />
       {!parsed.success && (
-        <p role="alert" className={s.queryError}>
+        <p
+          role="alert"
+          className="mb-5 rounded-md border border-care-error-border bg-care-error px-4 py-3 text-sm text-care-error-text"
+        >
           {parsed.error.issues[0].message}
         </p>
       )}

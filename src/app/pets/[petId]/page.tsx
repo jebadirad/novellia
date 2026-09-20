@@ -17,7 +17,6 @@ import {
 import { Button } from '@/components/ui';
 import { AddRecordButton } from '@/components/actions';
 import { Filters } from '@/components/filters';
-import s from '@/components/styles.module.css';
 export default async function PetPage({
   params,
   searchParams,
@@ -33,7 +32,7 @@ export default async function PetPage({
   return (
     <>
       <Breadcrumbs items={[{ label: 'Pets', href: '/pets' }, { label: pet.name }]} />
-      <div className={s.profileHeader}>
+      <div className="mb-7.5 flex flex-wrap items-center gap-4 md:flex-nowrap md:gap-5.5 [&_h1]:text-3xl [&_h1]:font-semibold [&_h1]:tracking-tight md:[&_h1]:text-4xl [&_p]:mt-1 [&_p]:text-sm [&_p]:text-secondary">
         <PetAvatar pet={pet} large />
         <div>
           <h1>{pet.name}</h1>
@@ -42,40 +41,43 @@ export default async function PetPage({
             {pet.breed && ` · ${pet.breed}`} · {petAge(pet.birthDate, today())}
           </p>
         </div>
-        <div className={s.profileActions}>
+        <div className="flex w-full gap-2.5 md:ml-auto md:w-auto">
           <Button href={`/pets/${id}/edit`} label="Edit pet" size="lg" />
           <AddRecordButton petId={id} />
         </div>
       </div>
-      <div className={s.profileGrid}>
-        <div className={s.stack}>
+      <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[220px_minmax(0,1fr)] desk:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-5.5">
           <Panel title={`About ${pet.name}`}>
-            <div className={s.panelBody}>
-              <dl style={{ margin: 0 }}>
+            <div className="p-5 md:p-6">
+              <dl className="m-0">
                 <DetailField label="Species">{speciesLabels[pet.species]}</DetailField>
                 <DetailField label="Breed">{pet.breed}</DetailField>
                 <DetailField label="Birth date">{formatDate(pet.birthDate)}</DetailField>
                 <DetailField label="Sex">
-                  <span className={s.capitalize}>{pet.sex}</span>
+                  <span className="capitalize">{pet.sex}</span>
                 </DetailField>
                 <DetailField label="Notes">{pet.notes}</DetailField>
               </dl>
             </div>
           </Panel>
         </div>
-        <div className={s.stack}>
+        <div className="flex min-w-0 flex-col gap-5.5">
           {pet.nextFollowUp && (
             <Panel title="Next follow-up">
               <FollowUpList records={[pet.nextFollowUp]} today={today()} />
             </Panel>
           )}
           <section>
-            <h2 className={s.subheading}>
-              Medical history <span className={s.muted}>({pet.recordCount})</span>
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">
+              Medical history <span className="text-xs text-secondary">({pet.recordCount})</span>
             </h2>
             <Filters kind="records" scoped />
             {!parsed.success && (
-              <p role="alert" className={s.queryError}>
+              <p
+                role="alert"
+                className="mb-5 rounded-md border border-care-error-border bg-care-error px-4 py-3 text-sm text-care-error-text"
+              >
                 {parsed.error.issues[0].message}
               </p>
             )}

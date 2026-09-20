@@ -3,7 +3,6 @@ import { today } from '@/server/context';
 import { petQuerySchema, cleanQuery, type SearchParams } from '@/domain/schemas';
 import { PageHeading, AddPetButton, PetCard, EmptyState, Pagination } from '@/components/display';
 import { Filters } from '@/components/filters';
-import s from '@/components/styles.module.css';
 export const metadata = { title: 'Your pets' };
 export default async function PetsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -20,14 +19,17 @@ export default async function PetsPage({ searchParams }: { searchParams: Promise
       />
       <Filters kind="pets" />
       {!parsed.success && (
-        <p role="alert" className={s.queryError}>
+        <p
+          role="alert"
+          className="mb-5 rounded-md border border-care-error-border bg-care-error px-4 py-3 text-sm text-care-error-text"
+        >
           {parsed.error.issues[0].message}
         </p>
       )}
       {result && (
         <>
           {result.items.length ? (
-            <div className={s.petGrid}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5.5 desk:grid-cols-3">
               {result.items.map((pet) => (
                 <PetCard key={pet.id} pet={pet} today={today()} />
               ))}

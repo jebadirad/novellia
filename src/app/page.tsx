@@ -13,7 +13,6 @@ import {
 } from '@/components/display';
 import { AddRecordButton } from '@/components/actions';
 import { speciesLabels } from '@/domain/schemas';
-import s from '@/components/styles.module.css';
 export default async function Overview() {
   const [data, pets] = await Promise.all([getDashboard(), petOptions()]);
   return (
@@ -24,46 +23,68 @@ export default async function Overview() {
         eyebrow="YOUR PETS, AT A GLANCE"
         action={<AddRecordButton pets={pets} />}
       />
-      <div className={s.hero}>
+      <div className="relative mb-6 flex min-h-40 justify-between overflow-hidden rounded-xl border border-border bg-pet-hero p-5.5 md:min-h-43 md:px-8 md:py-7">
         <div>
-          <p className={s.eyebrow}>FOR EVERY CHAPTER OF THEIR LIFE</p>
-          <h2>
+          <p className="mb-2 text-2xs font-bold tracking-[0.2em] text-secondary">
+            FOR EVERY CHAPTER OF THEIR LIFE
+          </p>
+          <h2 className="max-w-60 text-2xl leading-tight font-semibold tracking-tight md:max-w-100 md:text-3xl">
             Good days start
             <br />
             with thoughtful care.
           </h2>
-          <p>Keep the little details that make a big difference, all in one place.</p>
+          <p className="mt-2.5 max-w-52 text-xs text-secondary md:max-w-100 md:text-sm">
+            Keep the little details that make a big difference, all in one place.
+          </p>
         </div>
-        <div className={s.heroArt} aria-hidden="true">
-          <Dog />
-          <Cat />
+        <div
+          className="relative flex w-11 min-w-10 -rotate-8 items-center justify-center gap-2.5 self-end text-secondary before:absolute before:right-[-50px] before:size-24 before:rounded-full before:bg-pet-hero-decoration before:content-[''] md:w-auto md:min-w-40 md:self-auto md:before:right-2.5 md:before:size-41 desk:min-w-55"
+          aria-hidden="true"
+        >
+          <Dog className="z-10 size-16 rounded-full border-8 border-pet-hero-decoration bg-muted p-2 max-md:absolute max-md:right-[-7px] max-md:bottom-5 md:size-24 md:p-4.5" />
+          <Cat className="z-10 size-13 rounded-full border-8 border-pet-hero-decoration bg-pet-cat p-2 max-md:absolute max-md:right-[-34px] max-md:bottom-[-5px] md:mt-10 md:size-24 md:p-4.5" />
         </div>
       </div>
-      <div className={s.stats}>
-        <Link href="/pets" className={s.stat}>
+      <div className="mb-5 grid grid-cols-3 gap-2 md:mb-6 md:gap-4.5">
+        <Link
+          href="/pets"
+          className="block rounded-lg border border-border bg-surface px-3 py-3 transition-colors hover:border-border-strong motion-reduce:transition-none md:flex md:items-center md:justify-between md:px-5.5 md:py-5"
+        >
           <div>
-            <p className={s.statLabel}>Your companions</p>
-            <div className={s.statValue}>{data.petCount}</div>
+            <p className="text-2xs text-secondary md:text-xs">Your companions</p>
+            <div className="text-2xl leading-snug font-semibold tracking-tight md:text-3xl">
+              {data.petCount}
+            </div>
           </div>
-          <div className={s.statIcon}>
+          <div className="hidden size-11 items-center justify-center rounded-lg bg-muted text-secondary md:flex">
             <PawPrint size={22} />
           </div>
         </Link>
-        <Link href="/follow-ups?group=overdue" className={s.stat}>
+        <Link
+          href="/follow-ups?group=overdue"
+          className="block rounded-lg border border-border bg-surface px-3 py-3 transition-colors hover:border-border-strong motion-reduce:transition-none md:flex md:items-center md:justify-between md:px-5.5 md:py-5"
+        >
           <div>
-            <p className={s.statLabel}>Overdue follow-ups</p>
-            <div className={s.statValue}>{data.overdueCount}</div>
+            <p className="text-2xs text-secondary md:text-xs">Overdue follow-ups</p>
+            <div className="text-2xl leading-snug font-semibold tracking-tight md:text-3xl">
+              {data.overdueCount}
+            </div>
           </div>
-          <div className={`${s.statIcon} ${s.statRed}`}>
+          <div className="hidden size-11 items-center justify-center rounded-lg bg-care-error text-secondary md:flex">
             <Clock3 size={22} />
           </div>
         </Link>
-        <Link href="/follow-ups?group=due" className={s.stat}>
+        <Link
+          href="/follow-ups?group=due"
+          className="block rounded-lg border border-border bg-surface px-3 py-3 transition-colors hover:border-border-strong motion-reduce:transition-none md:flex md:items-center md:justify-between md:px-5.5 md:py-5"
+        >
           <div>
-            <p className={s.statLabel}>Due in 30 days</p>
-            <div className={s.statValue}>{data.dueCount}</div>
+            <p className="text-2xs text-secondary md:text-xs">Due in 30 days</p>
+            <div className="text-2xl leading-snug font-semibold tracking-tight md:text-3xl">
+              {data.dueCount}
+            </div>
           </div>
-          <div className={`${s.statIcon} ${s.statAmber}`}>
+          <div className="hidden size-11 items-center justify-center rounded-lg bg-care-warning text-secondary md:flex">
             <CalendarDays size={22} />
           </div>
         </Link>
@@ -79,7 +100,7 @@ export default async function Overview() {
         </Panel>
       ) : (
         <>
-          <div className={s.dashboardGrid}>
+          <div className="mb-5.5 grid grid-cols-1 gap-5 md:gap-5.5 desk:grid-cols-[minmax(0,1.35fr)_minmax(270px,1fr)]">
             <Panel title="A little attention needed" href="/follow-ups" linkLabel="All follow-ups">
               {data.attention.length ? (
                 <FollowUpList records={data.attention} today={today()} />
@@ -92,7 +113,11 @@ export default async function Overview() {
             </Panel>
             <Panel title="Your companions" href="/pets" linkLabel="All pets">
               {data.pets.map((pet) => (
-                <Link className={s.petMini} key={pet.id} href={`/pets/${pet.id}`}>
+                <Link
+                  className="flex items-center gap-3 border-b border-border px-4.5 py-3.5 last:border-b-0 md:px-6 [&_p]:text-xs [&_p]:text-secondary [&_strong]:text-sm [&_strong]:font-semibold [&>svg]:ml-auto [&>svg]:text-secondary"
+                  key={pet.id}
+                  href={`/pets/${pet.id}`}
+                >
                   <PetAvatar pet={pet} />
                   <div>
                     <strong>{pet.name}</strong>

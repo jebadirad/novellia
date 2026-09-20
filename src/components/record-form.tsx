@@ -10,7 +10,6 @@ import type { RecordDto, FieldErrors } from '@/domain/types';
 import { recordFieldComponents } from './record-fields';
 import { CalendarField, TextField, NotesField, focusError, useDirtyGuard } from './form-tools';
 import { mutate, RequestError } from './actions';
-import s from './styles.module.css';
 const icons = { vet_visit: Stethoscope, vaccination: Syringe, medication: Pill } satisfies Record<
   RecordType,
   React.ComponentType<{ size?: number }>
@@ -106,21 +105,24 @@ export function RecordForm({
   }
   return (
     <>
-      <form className={s.form} onSubmit={submit} noValidate>
+      <form className="flex max-w-180 flex-col gap-5.5" onSubmit={submit} noValidate>
         {error && (
-          <div className={s.formError} role="alert">
+          <div
+            className="rounded-md border border-care-error-border bg-care-error px-4.5 py-3.5 text-sm text-care-error-text"
+            role="alert"
+          >
             {error}
           </div>
         )}
         {!record && (
-          <div className={s.typeChoices} role="group" aria-label="Record type">
+          <div className="grid grid-cols-3 gap-2 md:gap-2.5" role="group" aria-label="Record type">
             {recordTypes.map((type) => {
               const Icon = icons[type];
               return (
                 <button
                   key={type}
                   type="button"
-                  className={s.typeChoice}
+                  className="flex cursor-pointer flex-col gap-2 rounded-md border border-border bg-surface px-2 py-3 text-left text-xs text-secondary aria-pressed:border-accent aria-pressed:bg-accent-muted aria-pressed:ring-1 aria-pressed:ring-accent md:px-2.5 md:py-4 [&>span]:hidden [&>span]:text-2xs [&>span]:leading-normal md:[&>span]:block [&>strong]:text-primary"
                   aria-pressed={type === values.type}
                   onClick={() => changeType(type)}
                 >
@@ -132,10 +134,10 @@ export function RecordForm({
             })}
           </div>
         )}
-        <section className={s.formSection}>
+        <section className="rounded-lg border border-border bg-surface px-4.5 py-5 md:p-7 [&>h2]:mb-1 [&>h2]:text-base [&>h2]:font-semibold [&>p]:mb-5.5 [&>p]:text-xs [&>p]:text-secondary">
           <h2>Record information</h2>
           <p>{recordMeta[values.type].description}.</p>
-          <div className={s.formFields}>
+          <div className="flex flex-col gap-5 md:gap-5.5">
             <TextField
               name="title"
               label="Title"
@@ -144,7 +146,7 @@ export function RecordForm({
               errors={errors}
               placeholder={recordMeta[values.type].placeholder}
             />
-            <div className={s.twoColumns}>
+            <div className="grid grid-cols-1 gap-5.5 md:grid-cols-2">
               <CalendarField
                 name="occurredOn"
                 label={recordMeta[values.type].dateLabel}
@@ -164,10 +166,10 @@ export function RecordForm({
             </div>
           </div>
         </section>
-        <section className={s.formSection}>
+        <section className="rounded-lg border border-border bg-surface px-4.5 py-5 md:p-7 [&>h2]:mb-1 [&>h2]:text-base [&>h2]:font-semibold [&>p]:mb-5.5 [&>p]:text-xs [&>p]:text-secondary">
           <h2>{recordMeta[values.type].label} details</h2>
           <p>Capture the information you have from your vet.</p>
-          <div className={s.formFields}>
+          <div className="flex flex-col gap-5 md:gap-5.5">
             <Fields
               values={details}
               set={(key, value) => setDetails((current) => ({ ...current, [key]: value }))}
@@ -183,7 +185,7 @@ export function RecordForm({
             />
           </div>
         </section>
-        <section className={s.formSection}>
+        <section className="rounded-lg border border-border bg-surface px-4.5 py-5 md:p-7 [&>h2]:mb-1 [&>h2]:text-base [&>h2]:font-semibold [&>p]:mb-5.5 [&>p]:text-xs [&>p]:text-secondary">
           <CheckboxInput
             label="Add a follow-up"
             value={followUp}
@@ -191,7 +193,7 @@ export function RecordForm({
             description="Keep the next step alongside this record."
           />
           {followUp && (
-            <div className={s.formFields} style={{ marginTop: 22 }}>
+            <div className="mt-5.5 flex flex-col gap-5 md:gap-5.5">
               <CalendarField
                 name="followUpOn"
                 label="Follow-up date"
@@ -212,7 +214,7 @@ export function RecordForm({
             </div>
           )}
         </section>
-        <div className={s.formActions}>
+        <div className="flex justify-end gap-3 pt-1 pb-3">
           <Button
             label="Cancel"
             onClick={() =>

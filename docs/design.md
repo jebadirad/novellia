@@ -10,18 +10,18 @@ Success means complete pet/record CRUD, useful search, an overview, follow-up tr
 
 ## Decisions
 
-| Area             | Implementation                                                          |
-| ---------------- | ----------------------------------------------------------------------- |
-| Application      | Next.js 16 App Router, React 19, TypeScript                             |
-| UI               | Astryx 0.6.2, neutral theme with green accent tokens, CSS Modules       |
-| Server           | Route Handlers plus ordinary feature-service functions                  |
-| Database         | Prisma ORM 7 and PostgreSQL                                             |
-| Environments     | Local Docker; hosted Prisma Postgres on Vercel                          |
-| Identity         | One shared fictional workspace, no authentication                       |
-| Reads            | Dynamic Server Components call services directly                        |
-| Writes           | Client fetch, Zod validation, service, Prisma, refreshed page           |
-| Record extension | Validated type-specific JSON with explicit React components             |
-| State            | Form state in React; search state in URL; source of truth in PostgreSQL |
+| Area             | Implementation                                                                    |
+| ---------------- | --------------------------------------------------------------------------------- |
+| Application      | Next.js 16 App Router, React 19, TypeScript                                       |
+| UI               | Astryx 0.6.2, a custom Novellia theme, Tailwind CSS v4 with Astryx's token bridge |
+| Server           | Route Handlers plus ordinary feature-service functions                            |
+| Database         | Prisma ORM 7 and PostgreSQL                                                       |
+| Environments     | Local Docker; hosted Prisma Postgres on Vercel                                    |
+| Identity         | One shared fictional workspace, no authentication                                 |
+| Reads            | Dynamic Server Components call services directly                                  |
+| Writes           | Client fetch, Zod validation, service, Prisma, refreshed page                     |
+| Record extension | Validated type-specific JSON with explicit React components                       |
+| State            | Form state in React; search state in URL; source of truth in PostgreSQL           |
 
 The lockfile pins actual package versions. Styling uses bundled CSS rather than a StyleX build plugin. Components are imported through explicit package entrypoints.
 

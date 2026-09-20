@@ -4,7 +4,11 @@
 
 An owner companion with warm off-white backgrounds, white cards, a deep green action color, dark green-gray text, and small species illustrations. Amber and red indicate urgency or deletion. Every status has a text label.
 
-Astryx supplies buttons, badges, fields, selectors, dates, dialogs, toast announcements, and the sidebar container. The app uses a Next.js LinkProvider and custom CSS Modules. Accent colors are theme-token overrides.
+Astryx supplies buttons, badges, fields, selectors, dates, dialogs, toast announcements, and the sidebar container. The app uses a Next.js LinkProvider, a compiled Novellia theme, and Tailwind CSS v4 utilities for application layout and styling. This supersedes the original CSS Modules decision.
+
+`src/theme/novellia.ts` extends Astryx's neutral theme and owns the brand values. Astryx's `tailwind-theme.css` bridge maps its tokens to utilities such as `bg-surface`, `text-primary`, `border-border`, and `rounded-lg`. The small `@theme inline` block in `globals.css` maps additional pet-avatar and decorative colors to the same theme source. Components retain Astryx's variants and behavior. Layout, responsive changes, state styling, and application decoration use literal Tailwind classes in JSX.
+
+Run `npm run theme:build` after changing theme values during development. Installation, development startup, and production builds generate the SSR-ready theme automatically. Generated theme artifacts are ignored by Git. Global CSS contains imports, token mappings, and base accessibility rules; no component stylesheets or inline style objects are required.
 
 ## Shell and responsive layout
 
