@@ -4,21 +4,21 @@
 
 Pets: search name/breed and select species.
 
-Global Records: search title/notes/provider, pet selector, record-type selector, inclusive from/to dates, newest/oldest ordering. Results use a semantic table on desktop and stacked record rows below 768px.
+Global Records: search title/notes/provider, pet and provider selectors, record-type selector, inclusive from/to dates, newest/oldest ordering. Results use a semantic table on desktop and stacked record rows below 768px.
 
-Pet history: the same record controls except pet is fixed by the route.
+Pet history: record search, type, date bounds, and sort; pet is fixed by the route and provider selector is not shown.
 
 Follow-ups: pet selector and open/completed navigation; dashboard links can additionally scope overdue or due-within-30-days.
 
 ## URL contract
 
 Pets supports q, species, page.
-Records supports q, petId, type, from, to, sort, page.
+Records supports q, petId, providerId, type, from, to, sort, page.
 Follow-ups supports petId, tab=open|completed, group=overdue|due.
 
 Defaults: empty text, no selected filters, page 1, newest records, open follow-ups. Empty query values are removed. API query validation rejects invalid UUIDs, types, dates, page numbers, and reversed date intervals. Pages show errors before querying.
 
-Text input debounces for 300ms and replaces history. Select/date changes push navigation. Changing a filter resets page. Browser reload/back restores controls from the URL. Clear filters returns to the bare route.
+Text input debounces for 300ms and replaces history. Pending search timers are canceled on Back/Forward and clear; filter changes commit pending text with the new filter. An earlier navigation response does not erase newer typing. This is router navigation, not a custom fetch request requiring an AbortSignal. Address suggestions separately use fetch cancellation. Select/date changes push navigation. Changing a filter resets page. Browser reload/back restores controls from the URL. Clear filters returns to the bare route.
 
 ## Matching and ordering
 

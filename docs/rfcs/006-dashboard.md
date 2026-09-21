@@ -28,9 +28,9 @@ Below tablet widths the attention and pet panels stack. Summary tiles remain a c
 One dashboard service fetches independent reads in parallel:
 
 - total pet count;
-- incomplete follow-ups before today;
-- incomplete follow-ups from today through day + 30;
-- up to five attention items ordered by due date then ID;
+- open follow-ups, serialized/classified using each saved clinic timezone and appointment instant;
+- overdue and today/next-30-day counts derived from those same statuses;
+- up to five attention items ordered by instant, using start of clinic day for date-only reminders, then ID;
 - up to six pets;
 - five most recent medical events.
 
@@ -47,3 +47,5 @@ Add record opens the shared pet picker. With no pets, it points to pet creation.
 No pets shows a welcome/create panel. Pets without records still appear. No upcoming tasks says there are no follow-ups due in 30 days; it does not imply good health.
 
 After a mutation and route refresh, counts and lists must agree with the follow-up page. Date boundaries use the same domain utilities.
+
+Appointment attention items show browser-local and clinic times. Date-only due labels and recent medical-history dates include the year. Classification is shared with the follow-up page; it is recalculated on reads, not maintained by a background clock. The current demo loads open follow-ups for application-side classification, rather than separate SQL count queries.

@@ -16,7 +16,7 @@ Desktop: fixed 224px sidebar; brand at top; Overview, Pets, Records, Follow-ups,
 
 Mobile below 768px: compact brand header, full-width content with 18px side gutters, and fixed five-item bottom navigation. Forms and detail columns stack. Cards use three/two/one columns as width decreases.
 
-Full pages handle creation, editing, and record details. Alert dialogs handle delete/discard/type-change confirmation. A small dialog selects a pet when adding a record from a global screen. Provider creation and editing use a dialog that preserves the parent record form. Record overflow actions use an anchored Astryx DropdownMenu. All editable dates use the shared Astryx picker with YYYY-MM-DD before, during, and after focus.
+Full pages handle creation, editing, and record details. Alert dialogs handle delete/discard/type-change confirmation. A small dialog selects a pet when adding a record from a global screen. Provider creation and editing use a dialog that preserves the parent record form. Record overflow actions use an anchored Astryx DropdownMenu. All editable calendar dates use the shared Astryx picker with YYYY-MM-DD before, during, and after focus. Calendar-date summaries include the year. Astryx TimeInput uses 12-hour clinic time; appointment previews and saved displays pair browser-local and clinic times. Metadata timestamps use LocalTimestamp; compact completion labels currently omit the year.
 
 ## Screen map
 

@@ -4,7 +4,7 @@
 
 Heading: “Your companions”, descriptive text, Add pet action. Below it are a name/breed search and species filter, then pet cards.
 
-Each card contains a species icon and initial, species tag, linked name, breed, calculated age, sex, record count, and earliest incomplete follow-up. There are no uploaded images or external image dependencies.
+Each card contains a species icon and initial, species tag, linked name, breed, calculated age, sex, record count, and earliest incomplete follow-up by scheduled instant (date-only reminders use the start of the clinic day). There are no uploaded images or external image dependencies.
 
 Ordering is name then ID, ascending. Twenty items per page. Unknown birth dates display “Age unknown”. No pets invites creation; no matches invites clearing filters.
 
@@ -22,7 +22,7 @@ Pets / Luna
 Dog · Golden Retriever · 4 years
 
 [About Luna]        [Next follow-up]
- Species             Date, record link, completion action
+ Species             Clinic, date/time, record link, completion action
  Breed              [Medical history]
  Birthday            Search, type, date bounds, sort
  Sex                 Chronological records
@@ -42,3 +42,5 @@ GET/POST /api/pets; GET/PATCH/DELETE /api/pets/:petId. GET directory includes co
 ## Acceptance
 
 Names need not be unique. Unknown birth date is preserved. Search combines with species. Changes survive refresh. Deleting a pet leaves other pets and their records untouched.
+
+Medical-history rows display abbreviated month, day, and year. The next-follow-up panel displays both browser-local and clinic times for appointments.

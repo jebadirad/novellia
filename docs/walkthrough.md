@@ -1,66 +1,75 @@
 # Understanding and extending Novellia Pets
 
-## Read the application in this order
+## Read the code in this order
 
-1. prisma/schema.prisma: two related entities and three useful indexes.
-2. src/domain/schemas.ts: what a valid pet or record looks like.
-3. src/domain/dates.ts: calendar dates and follow-up groups.
-4. src/server/records.ts: persistence and follow-up state rules.
-5. src/app/api/pets/[petId]/records/route.ts: HTTP boundary.
-6. src/components/record-form.tsx: owner input and save flow.
-7. src/app/pets/[petId]/records/[recordId]/page.tsx: saved record display.
+1. `prisma/schema.prisma`: Pet, MedicalRecord, and CareProvider; the two distinct provider relationships; calendar dates versus timestamps.
+2. `src/domain/schemas.ts` and `providers.ts`: editable input, strict record details, and provider validation.
+3. `src/domain/dates.ts` and `scheduling.ts`: calendar formatting, UTC conversion, DST rejection, display differences, and status.
+4. `src/server/records.ts` and `follow-up-scheduling.ts`: persistence, provider checks, schedule snapshots, and completion.
+5. `src/app/api/pets/[petId]/records/route.ts`: creation HTTP boundary.
+6. `src/components/record-form.tsx`: input, provider dialogs, appointment preview, validation, and save.
+7. `src/app/pets/[petId]/records/[recordId]/page.tsx`: saved details, follow-up actions, and local timestamp display.
 
-## Trace one save
+## Trace a save
 
-An owner opens Luna's Add record page. The Server Component validates the route ID, fetches Luna, and passes Luna's ID plus today's date to RecordForm.
+The Add record Server Component validates the route, loads the pet and available providers, and passes their data plus the app's current calendar day to RecordForm. The page calls services directly rather than fetching its own API.
 
-RecordForm stores common values and type-specific values in React state. The selected explicit field component edits the details object.
+RecordForm keeps common and type-specific values in React state. An explicit field component edits the selected details shape. The medical provider and follow-up provider are separate selections. A provider dialog is a sibling form so saving it cannot submit the medical record accidentally.
 
-On Save, recordInputSchema checks the combined input. Invalid fields get messages and focus. Valid input is sent as JSON to the nested POST endpoint.
+Save validates with recordInputSchema for immediate feedback. The form sends JSON through mutate to the nested POST endpoint. The Route Handler parses the body and repeats validation because browser input is untrusted. createRecord checks the pet and starts a transaction. It validates provider links and calls followUpData to preserve or derive the schedule before writing with Prisma.
 
-The Route Handler parses JSON and runs the same schema again because browser validation is not trusted. It calls createRecord, which confirms the pet exists and uses Prisma to create a row.
+The serializer returns calendar dates as YYYY-MM-DD and timestamps as full ISO instants, with related providers and a derived follow-up status. The form shows a toast, bypasses its dirty guard, navigates to detail, and refreshes server data. The detail page reads through the service again.
 
-PostgreSQL stores common searchable columns plus validated details JSON. The serializer returns a DTO with calendar dates as strings.
+The UI sends the complete editable record. The partial PATCH API currently has a scheduling-field merge gap: callers must include existing followUpProviderId and followUpTime for linked follow-ups. See [known limitations](verification.md#known-limitations); do not describe this as fixed.
 
-The form shows a toast, bypasses its dirty guard, navigates to detail, and refreshes the server view. The detail page loads directly through the same services.
+## Trace an address and appointment
 
-## Why these choices?
+1. `address-picker.tsx` searches the application address endpoint with cancellation. `address-search.ts` bounds, validates, caches, and maps Photon responses, including coordinates.
+2. Provider save runs `provider-location.ts`: match the complete address, resolve geographic timezone with geo-tz, and store the server-derived IANA zone. There is no editable timezone dropdown. Failed resolution preserves manual address entry but leaves the zone unresolved.
+3. The record form accepts a clinic calendar date and optional clock time. `appointmentInstant` uses Temporal with disambiguation reject. A repeated or skipped daylight-saving hour must be corrected instead of guessed.
+4. The server independently calculates and stores followUpAt in UTC and followUpTimeZone as a snapshot. A clinic relocation does not move a saved appointment. Rescheduling uses the selected provider's current resolved zone and clears completion.
+5. `AppointmentDisplay` shows clinic time immediately and adds browser-local time after hydration. Both dates and the difference use the appointment date's daylight-saving rules. `LocalTimestamp` separately handles completed/added/updated metadata.
+6. `recordDto` computes status through scheduleGroup. Dashboard, lists, and badges use that same status. Scheduled appointments become overdue at their instant; date-only reminders use the saved clinic day, with APP_TIME_ZONE as fallback.
 
-**Why no NestJS?** This app has one UI and straightforward CRUD. Next routes supply the HTTP boundary without another application or framework lifecycle.
+## Trace search and test safety
 
-**Why PostgreSQL?** The same relational database runs locally and remotely, and its storage survives Vercel function termination and redeployments.
+`filters.tsx` stores committed filters in the URL and debounces draft text. Back/Forward cancels the pending timer before the restored page finishes. Filter selections combine pending text with the new filter, and earlier responses cannot replace newer typing. Next navigation handles record search; AbortController is used separately for address fetches.
 
-**Why JSON details?** New record types reuse the same table and CRUD operations. Strict runtime validation preserves structure. The cost is less convenient SQL reporting over type-specific fields.
+`tests/database-lifecycle.ts` validates the exact dedicated database name before deletion. Rejected setup does not permit destructive cleanup. A finally path still closes database resources. Integration tests intentionally clear the test database; browser fixtures remove their own records. External test-server configuration must also point to that database.
 
-**Why no stored status?** Overdue changes as time passes. Store due date and completion, then derive the status from today's date.
+## Explain the choices
 
-**Why DATE instead of a timestamp for a visit?** An owner enters a calendar day. Converting that to an arbitrary browser timezone can move it to the previous day.
-
-**Why validate twice?** Client validation is for feedback; server validation is the actual trust boundary.
-
-**What is one imperfect decision?** JSON detail schemas are easy to extend but put detailed reporting behind application code. Promote fields to columns/relations when reporting requirements become concrete.
+- **One Next.js app:** ordinary functions and Route Handlers fit this CRUD scope without a second backend lifecycle.
+- **PostgreSQL:** persistent remote storage survives Vercel function lifetimes. Local persistence has been verified; hosted redeployment checks remain pending.
+- **JSON details:** types reuse tables and CRUD infrastructure, with Zod enforcing shape. Detailed SQL reporting is the tradeoff.
+- **Derived status:** overdue changes as time passes, so compute it on reads instead of persisting a label.
+- **DATE versus timestamptz:** a visit day must not shift with the viewer's timezone; an appointment instant must convert. Store the clinic timezone separately because the instant alone does not retain that scheduling context.
+- **Provider snapshot:** identity is relational and provider names remain editable, while the appointment timezone/instant is preserved deliberately.
+- **Demo-scale queries:** open follow-ups are loaded and classified/sorted in application code. Larger installations would need an indexed actionable deadline and database filtering.
+- **Styling:** Astryx components retain their behavior and token-based appearance; Tailwind handles layout using the same tokens.
 
 ## Extension rehearsal
 
-Use a temporary branch to practice a lab_result type, then remove the exercise before submission unless you want it as a product feature.
+Practice on a temporary branch, such as codex/lab-result-rehearsal. The lab-result type is an exercise, not an implemented feature.
 
-1. Add labResultDetails = z.strictObject({ testName, result, referenceRange }) using existing requiredText/optionalText helpers.
-2. Add a literal lab_result option to recordSchema's discriminated union.
-3. Add metadata and an icon. TypeScript reports the missing entries in exhaustive maps.
-4. Add LabResultFields in record-fields.tsx, register it, and add a detail renderer/switch case.
-5. Add a unit validation example and an integration/browser create/read example.
-6. Run typecheck, tests, and build.
-7. Demonstrate a saved lab result under a pet; filtering and follow-ups should work without service rewrites.
+1. Add a strict labResultDetails schema with testName, result, and optional referenceRange.
+2. Add a lab_result discriminated-union option to recordSchema.
+3. Add metadata and a record-form icon; TypeScript exposes missing exhaustive entries.
+4. Add and register LabResultFields in record-fields.tsx. Add the detail renderer and explicit narrowing switch case in record-details.tsx.
+5. Add validation and integration create/read coverage; include a browser case if the new field interaction warrants it.
+6. Run typecheck, lint, tests, and build.
+7. Demonstrate persistence, filtering, and follow-up scheduling without rewriting CRUD services.
 
-An existing type's schema change is a separate problem: migrate existing details or introduce a detailsVersion reader. Do not silently reinterpret old JSON.
+Changing an existing type's stored shape needs a deliberate migration or detailsVersion-aware reader. Do not silently reinterpret old JSON.
 
 ## Seven-minute Loom outline
 
-- 0:00–0:45: owner problem and intentional scope.
-- 0:45–3:00: pets, add a typed record, search, complete a follow-up.
-- 3:00–4:30: trace a save through form, route, schema, service, database.
-- 4:30–5:30: show record-type extension points.
-- 5:30–6:30: explain JSON/reporting tradeoff, shared demo, and future auth ownership checks.
-- 6:30–7:00: local setup and verification evidence.
+- 0:00–0:45: owner problem, fictional shared data, scope.
+- 0:45–2:30: pet history, typed record, provider reuse, search.
+- 2:30–3:30: clinic appointment and Arizona/California winter/summer display; completion.
+- 3:30–4:45: trace form, route, validation, service, database, refresh.
+- 4:45–5:45: demonstrate extension points.
+- 5:45–6:30: JSON, timezone, ownership, and scale tradeoffs.
+- 6:30–7:00: local setup, actual verification, and pending hosted deployment.
 
-Before recording, narrate the save path without notes. The code should support your explanation, not substitute for it.
+Rehearse the save path without notes and distinguish tested behavior from planned work. Recording the Loom remains the owner's handoff step.

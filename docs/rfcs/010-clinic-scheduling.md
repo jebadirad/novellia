@@ -39,6 +39,8 @@ Appointments become overdue after their exact instant. Date-only reminders use t
 
 Completed, added, and updated timestamps still use the browser timezone. Historical calendar dates never shift. The browser zone is read after hydration; the initial server render shows clinic time. No location permission is required.
 
+For the current partial PATCH scheduling-field limitation and fresh migration ordering blocker, see [verification](../verification.md#known-limitations). The full form save path has been tested; these separate paths must not be described as verified.
+
 ## Verification and tradeoffs
 
 Tests cover California/Arizona winter and summer, midnight crossings, DST gaps and overlaps, clinic-day status, geographic boundaries including Navajo Nation, UTC persistence, distinct provider links, deletion/archive rules, clearing addresses, snapshot preservation, reopening, removal, desktop/mobile forms, refresh, completion, and automated accessibility.

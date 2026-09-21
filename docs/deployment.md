@@ -1,8 +1,10 @@
 # Deploying Novellia Pets to Vercel
 
+**Release blocker:** correct the fresh-database migration ordering described in [verification](verification.md#known-limitations), including a plan for already-applied local history, before following this runbook. Existing local migration success does not prove clean hosted setup.
+
 ## Provision
 
-Create a Vercel project named novellia-pets and two Prisma Postgres databases: one Production and one Preview. The Prisma marketplace free plan is sufficient for the demonstration's initial setup; verify your account's current limits.
+Create a Vercel project named novellia-pets and two Prisma Postgres databases: one Production and one Preview. Choose a plan appropriate to the demo and verify the current account limits and terms during provisioning.
 
 Prisma's marketplace integration may require the account owner to accept its terms in a browser. The CLI cannot complete provisioning until that step is done.
 
@@ -10,11 +12,11 @@ Prisma's marketplace integration may require the account owner to accept its ter
 
 Set these separately for Production and Preview:
 
-| Variable      | Value                                           |
-| ------------- | ----------------------------------------------- |
-| DATABASE_URL  | Provider's pooled postgresql connection URL     |
-| DIRECT_URL    | Provider's direct PostgreSQL URL for migrations |
-| APP_TIME_ZONE | America/Phoenix                                 |
+| Variable      | Value                                                                        |
+| ------------- | ---------------------------------------------------------------------------- |
+| DATABASE_URL  | Provider's pooled postgresql connection URL                                  |
+| DIRECT_URL    | Provider's direct PostgreSQL URL for migrations                              |
+| APP_TIME_ZONE | America/Phoenix: historical-date validation and unresolved reminder fallback |
 
 Use the provider's PostgreSQL TCP URLs for the pg adapter. A prisma:// Accelerate URL is not interchangeable with a pg connection URL.
 
@@ -27,7 +29,7 @@ Do not put credentials in source control, public variables, screenshots, or READ
 3. Confirm the target database and run prisma migrate deploy with its DIRECT_URL.
 4. Run the seed only when initializing the dedicated demo database.
 5. Deploy the Next.js project; npm run build generates Prisma Client.
-6. Verify pet creation, record creation, edit, refresh, follow-up completion, and deletion.
+6. Verify pet and record CRUD, direct-page refresh, provider address resolution, a timed appointment viewed from a different browser timezone, and completion/reopen.
 7. Redeploy and confirm a temporary smoke-test row survives, then remove only that row.
 
 Do not run seed or reset in the Vercel build command. Do not connect preview builds to the production database.
@@ -36,7 +38,13 @@ Do not run seed or reset in the Vercel build command. Do not connect preview bui
 
 All database routes run in Node.js. The database module creates a pg pool with max 5, 5-second idle timeout, and 10-second connection timeout. Vercel's attachDatabasePool releases idle connections around function suspension. Prisma uses @prisma/adapter-pg.
 
-Pages read dynamically. Database access is not required to prerender pages during build; DATABASE_URL is required when serving them.
+Pages read dynamically. Pages do not query the database during prerendering; valid server environment configuration is required for generation and runtime. DATABASE_URL is required when serving database-backed pages.
+
+## Clinic timezone data
+
+`next.config.ts` externalizes geo-tz and explicitly traces its required `timezones-1970` boundary files into provider API functions. Unused geographic datasets are excluded. These are read-only package assets, not persistent runtime storage. Keep this configuration when changing build tooling, and inspect the deployed function artifacts or exercise a real address-to-timezone save after release.
+
+Photon address lookup requires outbound HTTPS and may time out or throttle. No API key is configured. Unresolved addresses still save, but timed appointments remain blocked until resolution succeeds. Existing providers resolve when a complete address is saved; migrations and seeds do not geocode them.
 
 ## Rollback
 

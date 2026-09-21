@@ -1,56 +1,49 @@
-# Verification and remaining deployment work
+# Verification and remaining work
 
-Verified locally on September 18, 2026. This file distinguishes local evidence from hosted deployment, which is still pending.
+## Evidence as of September 20, 2026
 
-## Tailwind migration — September 19, 2026
+This records checks completed during implementation, not a guarantee about every later revision. The documentation refresh reviewed code and documentation consistency; it did not rerun application suites or hosted provisioning.
 
-Replaced the application CSS Module and inline style objects with Tailwind CSS v4 utilities. Astryx components keep their native variants and theme styling. The custom theme in `src/theme/novellia.ts` is compiled for SSR, and Astryx's official Tailwind bridge exposes its colors, typography, spacing, and radii to application utilities. Additional avatar and decorative tokens are defined in the same theme.
+| Check                   | Latest recorded result                                                                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit tests              | 43 passed after clinic scheduling and the year-inclusive calendar-date change                                                                                     |
+| PostgreSQL integration  | 4 passed after clinic scheduling: CRUD, providers, scheduling snapshots/transitions, search, cascade isolation, seed and dashboard consistency                    |
+| Browser tests           | 24 passed against the production build after clinic scheduling; includes search races, timestamp zones, desktop/mobile appointments, provider and phone workflows |
+| Build                   | Production build passed after scheduling; dynamic pages/routes retained                                                                                           |
+| Static checks           | Lint, typecheck, and formatting passed after the year-inclusive calendar-date change                                                                              |
+| Accessibility           | Automated axe checks and exercised keyboard/dialog/form workflows passed; not a complete manual accessibility audit                                               |
+| Responsive behavior     | Workflow checks at 375, 768, and 1440 pixels; appointment details visually reviewed on desktop/mobile                                                             |
+| Real address resolution | Application lookup and a temporary test provider resolved a public address to America/New_York; the fixture was removed                                           |
+| Deployment assets       | Build traces include geo-tz's required 1970 boundary data and exclude unused datasets                                                                             |
 
-The production build, TypeScript, lint, formatting, and all 16 Playwright tests passed after conversion. Populated desktop and mobile screens passed axe checks and were visually reviewed; workflow layout checks covered 375, 768, and 1440 pixels. The theme build's `--check` verified that generated artifacts match their source. No CSS Module imports, component stylesheets, raw color values in JSX, or application `style` props remain. `npm audit` reported zero known vulnerabilities.
+The final browser run preceded the one-line change adding years to compact calendar dates. That change received static checks and all 43 unit tests, not another full browser/build run. Dependency audits previously reported no known vulnerabilities; no fresh audit was run for this documentation edit.
 
-## Completed
+Earlier local checks verified clean installation, app-restart persistence, and provider/address migrations without resetting existing records. These are historical local checks, not remote deployment proof. Screenshots and temporary evidence live in ignored `artifacts/` and test-output directories.
 
-| Check                   | Evidence                                                                                                                                                                                                                                                                                                 |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Dependency installation | Clean `npm ci` completed and generated Prisma Client.                                                                                                                                                                                                                                                    |
-| Production build        | `npm run build` passed; database pages and API routes are dynamic.                                                                                                                                                                                                                                       |
-| Type safety and lint    | `npm run typecheck` and `npm run lint` passed.                                                                                                                                                                                                                                                           |
-| Domain tests            | 19 tests cover provider validation, normalization, record links, and existing validation, calendar dates, and follow-up boundaries.                                                                                                                                                                      |
-| PostgreSQL integration  | Three database workflow tests cover CRUD, isolation, cascade deletion, filters, pagination, completion transitions, dashboard counts, and repeat-safe seeds.                                                                                                                                             |
-| Browser workflows       | 16 Playwright tests cover all three record types, pet CRUD, failed and pending saves, dirty navigation, query state, invalid requests, responsive layout, and accessibility.                                                                                                                             |
-| Responsive review       | Main workflows checked at 375, 768, and 1440 pixels. Populated mobile and desktop pages were also visually reviewed.                                                                                                                                                                                     |
-| Accessibility           | Axe WCAG A/AA checks passed on seven core routes; additional checks passed on populated dashboard, pets, records, and follow-ups at desktop and mobile widths. Keyboard submission/navigation, validation focus, and confirmation dialogs were exercised. This is not a full manual accessibility audit. |
-| Persistence             | Created a temporary pet through the API, stopped and restarted the production server, read the same pet successfully, and deleted only that temporary row.                                                                                                                                               |
-| Dependencies            | `npm audit` reported zero known vulnerabilities at verification time.                                                                                                                                                                                                                                    |
+## Test environment and safety
 
-Local application database: Docker PostgreSQL with a named volume. Integration and browser tests use a separate `novellia_test` database. Screenshots and temporary verification files live in ignored `artifacts/`; they are not application dependencies.
+Local development uses Docker PostgreSQL with a named volume. Integration and browser checks use `novellia_test`. `tests/database-lifecycle.ts` checks the PostgreSQL URL and exact database name before deletion, prevents cleanup deletion after rejected setup, and closes Prisma/pool resources even on failure. Direct browser database fixtures also invoke the guard. External browser-server configuration remains the operator's responsibility: its API must point to the same dedicated test database.
 
-The tests run Chromium on Windows against the application running in WSL. The older local Ubuntu version could not run Playwright's current Linux Chromium build. The README documents this environment-specific workaround.
-
-Playwright trace recording also reproduced a streamed-page stall in this Windows/WSL setup. Direct browser loads and the same test without the recorder passed. The default suite therefore disables tracing and retains screenshots on failure. This records the observed condition, not a confirmed upstream root cause. Tracing can be enabled explicitly with `--trace on` for diagnosis elsewhere.
-
-## Care-provider verification
-
-Care-provider iteration (September 20): both provider migrations applied locally without resetting data. All 12 existing medical-record IDs and normalized provider names matched the pre-migration snapshot. Migrated providers and record edit pages were checked in the development browser. Provider tests cover failed inline saves, retained record fields, duplicate selection, rename, archive/restore, deletion protection, mobile layout, and dialog accessibility. Accessibility measurements wait for the dialog's opening animation to settle.
+Windows Chromium was used against WSL. The older Ubuntu distribution could not run the installed Linux Chromium. Tracing is off by default after observed streamed-page stalls with recording enabled; occasional initial-load stalls were also observed earlier. Their root cause is unconfirmed. The latest complete 24-test run passed without retries.
 
 ## Hosted deployment remains pending
 
-The Vercel CLI authenticated successfully as the existing account. Provisioning the dedicated free-plan Prisma Postgres database stopped at Prisma's marketplace terms requirement. No hosted database or live application deployment has been claimed as verified.
+The last recorded Vercel CLI provisioning attempt stopped at Prisma marketplace terms acceptance. This refresh did not inspect account state. No live deployment, hosted CRUD, or persistence across Vercel redeployment is claimed verified.
 
-The account owner must complete the provider's terms step. Then follow deployment.md to provision separate Production and Preview databases, configure their environment variables, apply the migration, seed explicitly, deploy, and perform remote CRUD and redeployment-persistence checks.
+Complete the account step, provision separate Preview/Production databases, then follow [deployment.md](deployment.md). Validate the deployed address-to-timezone flow as well as CRUD and persistence. Local database survival and packaged build assets do not replace remote checks.
 
-Local persistence proves the application's database integration; it does not replace those remote checks.
+## Known limitations
 
-## Known development-only warning
+- **Fresh-database migration ordering:** `20260920180000_clinic_scheduling` alters CareProvider and reads providerId, but sorts before `20260920210000_care_providers`, which creates them. The initial migration contains neither. Static inspection establishes that a fresh sequential migration would fail; this refresh did not run migrations against an empty database. The existing local databases succeeded because providers were already applied before scheduling was added. Correct the ordering with an explicit plan for already-applied migration history, then verify empty-database setup before hosted provisioning. Do not reset an existing database to work around this.
 
-Astryx 0.6.2 forwards the DateInput `nativePicker` property to a DOM element and produces a React unknown-property warning during development. The shared date field uses Astryx’s own picker to preserve YYYY-MM-DD on focus and blur. Labels, validation, production rendering, and automated accessibility checks pass. No package internals are patched; recheck this warning when upgrading Astryx.
+- **Partial record PATCH and scheduling:** `src/app/api/pets/[petId]/records/[recordId]/route.ts` merges existing common fields but currently omits `followUpProviderId` and `followUpTime` from that merge. A partial update that leaves them out on a linked follow-up can fail with a provider validation error. The application form sends both fields, so its save path works. API callers should include both current values until the merge is corrected. This gap was found during documentation review and is not fixed by this documentation-only change.
+- **Unresolved clinic location:** date-only reminders remain available and use APP_TIME_ZONE when no timezone snapshot exists. Timed creation/rescheduling requires a resolved address. Existing clinics resolve when their address is saved, not during migration.
+- **DST overlaps/gaps:** invalid or ambiguous local times are rejected; there is no UI for choosing between two occurrences of the repeated hour.
+- **Time-sensitive status:** status is recomputed on server reads/refresh, not by a continuously running client clock.
+- **Compact completion labels:** use the browser timezone but omit the year. Medical-history event dates and follow-up due dates include it.
+- **Development warning:** Astryx 0.6.2 DateInput was observed forwarding nativePicker to a DOM element, producing a React warning. No package internals are patched. Recheck when upgrading.
+- **Scale and ownership:** shared unauthenticated data, last successful write wins, application-side open-follow-up classification/sorting, no production clinical audit guarantees.
 
 ## Interview handoff
 
-The design document and eight RFCs describe the implemented behavior. walkthrough.md traces actual files and provides the lab-result extension rehearsal and a suggested Loom sequence. The owner-led rehearsal and Loom recording remain human handoff steps.
-
-## Contact validation and address lookup
-
-The structured-address migration preserved all three existing providers' IDs, phone values, and address text. Unit tests cover phone normalization/rejection, ZIP/state rules, partial addresses, Photon response mapping, duplicate results, query limits, and upstream failures. Database and browser tests cover structured persistence, field errors, suggestion selection, preserving suite information, manual fallback, and clearing optional fields. Browser autocomplete tests use deterministic responses. A separate live lookup of Phoenix City Hall succeeded through the application API without credentials.
-
-The final browser run passed 15 cases; the existing pet-creation case stalled on its initial streamed page load. A targeted rerun passed without code changes. This matches the previously observed local browser/WSL streaming symptom; its underlying cause remains unconfirmed. All three provider browser cases passed on the final build.
+The repository includes a master design, ten RFCs, setup/deployment instructions, and a [request-path walkthrough](walkthrough.md). The owner-led extension rehearsal and Loom recording remain human handoff steps. Describe the app as locally verified and deployment-ready in structure, not as remotely deployed and proven.

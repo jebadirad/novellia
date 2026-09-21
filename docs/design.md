@@ -16,7 +16,7 @@ Success means complete pet/record CRUD, useful search, an overview, follow-up tr
 | UI               | Astryx 0.6.2, a custom Novellia theme, Tailwind CSS v4 with Astryx's token bridge |
 | Server           | Route Handlers plus ordinary feature-service functions                            |
 | Database         | Prisma ORM 7 and PostgreSQL                                                       |
-| Environments     | Local Docker; hosted Prisma Postgres on Vercel                                    |
+| Environments     | Local Docker; target: Prisma Postgres on Vercel (remote verification pending)     |
 | Identity         | One shared fictional workspace, no authentication                                 |
 | Reads            | Dynamic Server Components call services directly                                  |
 | Writes           | Client fetch, Zod validation, service, Prisma, refreshed page                     |
@@ -34,9 +34,9 @@ The lockfile pins actual package versions. Styling uses bundled CSS rather than 
 5. [Search and filtering](rfcs/005-search.md)
 6. [Overview dashboard](rfcs/006-dashboard.md)
 7. [Follow-ups](rfcs/007-follow-ups.md)
-8. [Clinic scheduling and timezones](rfcs/010-clinic-scheduling.md)
-9. [Delivery and verification](rfcs/008-delivery.md)
-10. [Reusable care providers](rfcs/009-care-providers.md)
+8. [Delivery and verification](rfcs/008-delivery.md)
+9. [Reusable care providers](rfcs/009-care-providers.md)
+10. [Clinic scheduling and timezones](rfcs/010-clinic-scheduling.md)
 
 Each RFC records screen structure, behavior, data dependencies, interfaces, tradeoffs, and acceptance checks.
 
@@ -57,7 +57,7 @@ Application services import `server-only`. Database configuration is separately 
 
 ## Boundaries
 
-Calendar dates represent a day, not an instant. They are stored as PostgreSQL DATE, serialized as YYYY-MM-DD, and formatted in UTC to avoid display shifts. The server passes its configured current day to forms and status displays.
+Calendar dates represent a day, not an instant. They are stored as PostgreSQL DATE, serialized as YYYY-MM-DD, and formatted in UTC to avoid display shifts. The server passes the configured current day to historical-date forms. Calendar display includes the year even with an abbreviated month. Follow-up status is computed from the saved clinic timezone and optional appointment instant; unresolved zones fall back to APP_TIME_ZONE.
 
 Historical medical records are editable and deletable. This app does not claim clinical immutability, HIPAA compliance, prescription guidance, or real-time collaboration.
 

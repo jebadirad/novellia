@@ -1,12 +1,14 @@
 # Novellia Pets
 
-A pet owner's medical-record organizer built with Next.js, Astryx, Prisma, and PostgreSQL. Manage pets, maintain typed medical records, search their history, and track follow-ups.
+A shared pet-owner medical-record organizer built with Next.js, Astryx, Tailwind, Prisma, and PostgreSQL. Manage pets, typed medical history, reusable care providers, date-only reminders, and clinic appointments.
 
-This is a shared, unauthenticated demonstration. Use fictional information. Visitors can edit the same records.
+**Shared demo: use fictional information.** There is no authentication or ownership isolation; visitors can edit the same data. This is an owner organizer, not a clinical audit system or medical-advice tool.
 
 ## Run locally
 
-Prerequisites: Node.js 24 (see `.nvmrc`), npm, and Docker with Compose.
+**Fresh-install blocker:** the current scheduling migration sorts before the provider-creation migration it depends on. The sequence below is the intended setup, but a new empty database needs the migration ordering corrected first. Existing upgraded local databases work. See [known limitations](docs/verification.md#known-limitations).
+
+Use Node.js 24 (see `.nvmrc`), npm, and Docker Compose. Run these commands from the repository root:
 
 ```sh
 npm ci
@@ -17,85 +19,84 @@ npm run db:seed
 npm run dev
 ```
 
-Open http://localhost:3000. The database uses port 54329 and a named Docker volume; it survives app and container restarts.
+Open http://localhost:3000. PostgreSQL uses local port 54329 and a named volume, so restarting the app or container preserves data. On PowerShell, replace `cp` with `Copy-Item`. For WSL, enable Docker Desktop integration or run Compose from PowerShell in this repository.
 
-On Windows, use PowerShell's `Copy-Item .env.example .env`. If using WSL, enable Docker Desktop's WSL integration or run the Docker commands from PowerShell in this repository.
-
-Seeding creates four pets and twelve records, including one pet without history and examples of every follow-up state. Repeating the seed preserves edits to existing seeded entries. The explicit destructive reset is:
+Seeding creates four pets, two providers, and twelve records across three pets. Dates are relative to the seed day; one pet has no records. Repeating the seed preserves edits. The seeded providers have no resolved addresses, so they support date-only reminders until an address is saved.
 
 ```sh
 npm run db:reset -- --confirm
 ```
 
-That command deletes **every pet and record in the configured database**. It is not exposed through the website.
+**Reset deletes every pet, medical record, follow-up, and provider in the configured database, then recreates the demo.** It is an explicit local command, never a public endpoint or build step.
 
-## Architecture
+## How it works
 
 ```text
-Page (Server Component) -> feature service -> Prisma -> PostgreSQL
-Form (Client Component) -> fetch -> API Route Handler -> Zod -> feature service
+Server page -> feature service -> Prisma -> PostgreSQL
+Client form -> fetch -> API route -> Zod -> feature service -> PostgreSQL
+Successful mutation -> toast -> navigation/server refresh
 ```
 
-Server-rendered pages call services directly. Mutations use JSON endpoints. There is no internal HTTP call for page reads, no separate NestJS service, and no client-state framework.
+Pages call services directly. There is no separate NestJS app, internal HTTP hop for page reads, Redux store, or client query cache.
 
-- `src/domain`: React-free schemas, types, calendar dates, and record metadata.
-- `src/server`: services, database client, serializers, and HTTP error handling.
-- `src/components`: explicit forms, type-specific fields, reusable screen pieces.
-- `src/app`: pages and thin API routes.
-- `prisma`: data model, migration history, repeat-safe seed.
-- `docs`: design document, eight feature RFCs, deployment and interview guides.
+| Directory        | Responsibility                                                              |
+| ---------------- | --------------------------------------------------------------------------- |
+| `src/app`        | Dynamic pages and thin API routes                                           |
+| `src/components` | Forms, Astryx controls, shared display components                           |
+| `src/domain`     | React-free validation, metadata, date and scheduling utilities              |
+| `src/server`     | Business rules, provider geocoding, persistence, serialization, HTTP errors |
+| `prisma`         | Three-model schema, committed migrations, repeat-safe seed                  |
+| `tests`          | Unit, PostgreSQL integration, and browser tests                             |
+| `docs`           | Design, ten RFCs, deployment, verification, and interview walkthrough       |
 
-Start with [the design document](docs/design.md), then [the code walkthrough](docs/walkthrough.md).
+Start with [the design](docs/design.md) and [the request walkthrough](docs/walkthrough.md). [RFC 004](docs/rfcs/004-medical-records.md) explains adding a record type without changing the table structure.
 
-## Styling
+## Product behavior
 
-Astryx owns the UI components; Tailwind CSS v4 owns application layouts and custom styling. Both use the same design tokens through Astryx's official Tailwind bridge.
+- Pet CRUD with unknown birthdays and duplicate names supported.
+- Vet visits, vaccinations, and medications have strict type-specific JSON schemas.
+- Record type and parent pet stay fixed after creation. Pet deletion cascades to its records and follow-ups.
+- Records choose a reusable provider; inline creation preserves the record form. Provider names are unique ignoring case and extra whitespace.
+- Archive preserves provider links. Permanent deletion requires zero medical-record and follow-up links.
+- Phone fields mask while typing and validate U.S. shape on blur/save. Addresses use separate street, suite, city, state, and ZIP fields.
+- Search matches pet name/breed or record title/notes/provider name, with URL filters and 20-item pages. JSON details are not searched.
+- One follow-up per record, with its own clinic or vet. Date-only reminders and optional timed appointments share completion/reopen actions.
+- Rescheduling the date, time, or provider reopens a follow-up. Unrelated edits preserve completion and the original appointment timezone snapshot.
 
-- Change brand values in `src/theme/novellia.ts`, which extends Astryx's neutral theme.
-- Use semantic utilities such as `bg-surface`, `text-primary`, `border-border`, and `rounded-lg` in JSX.
-- Use Astryx component props such as `variant="primary"` and `size="lg"` for built-in appearance.
-- Use responsive utilities for layout and extract repeated UI into React components.
-- Run `npm run theme:build` after editing theme values; startup, installation, and production builds also run it automatically.
+## Dates, appointments, and addresses
 
-The generated theme provides styling on the initial server-rendered page. `globals.css` contains the cascade order, Astryx token bridge, a few app-specific token aliases, and base rules. CSS Modules and application inline style objects have been removed. Prettier sorts Tailwind classes automatically.
+Calendar dates are stored as PostgreSQL DATE and serialized as `YYYY-MM-DD`. Date fields keep that format while focused; medical-history lists, tables, and due-date summaries include the year, such as **Sep 20, 2026**.
 
-## Code style
+Completed, added, and updated timestamps are stored as UTC instants and displayed in the browser timezone. Their tooltip includes local time and timezone. Compact completion labels currently omit the year; this is separate from medical-event and due-date formatting.
 
-ESLint enforces braces for every `if`, `else`, and loop body (`curly: ["error", "all"]`). Prettier handles formatting; it does not add required control-flow braces.
+Enter appointment times as given by the clinic. The form and saved appointment show both **your time** and **clinic time**, including dates and the difference on the appointment date. California 9 AM becomes Phoenix 10 AM in winter and 9 AM in summer. Skipped or repeated daylight-saving hours return a field error instead of guessing.
 
-The ESLint flat config explicitly uses `eslint-plugin-react`'s `recommended` and `jsx-runtime` presets. TypeScript files use static prop types instead of the `react/prop-types` rule. Next.js's Hooks, accessibility, framework, and TypeScript checks remain enabled. Additional Airbnb-style rules cover comparisons, declarations, object shorthand, JSX conventions, stable keys, and component safety. This is not the complete Airbnb preset: published `eslint-config-airbnb@19.0.4` targets ESLint 7/8 and older Hooks peer dependencies. We keep the current Next.js toolchain and its modern JSX runtime rather than forcing that legacy configuration.
+There is no manually entered timezone field. Saving a complete provider address uses Photon geocoding and geo-tz geographic boundaries to derive it. For existing providers, save their address once before scheduling a time. The address must match street, city, state, and five-digit ZIP; selecting a suggestion helps correct unmatched formatting. Public lookup can be unavailable. Manual entry and date-only reminders still work, but timed appointments require a resolved address.
 
-`eslint-config-prettier` disables conflicting formatting rules. Prettier uses two spaces, semicolons, single quotes in JavaScript, LF line endings, trailing commas, and Tailwind class sorting.
+Appointments become overdue after their exact instant. Date-only reminders use their saved clinic timezone. `APP_TIME_ZONE` (default `America/Phoenix`) defines historical-date validation and is the fallback when a reminder has no resolved timezone. A clinic relocation does not silently move existing appointments. See [RFC 010](docs/rfcs/010-clinic-scheduling.md).
 
-- `npm run lint`: enforce rules with zero allowed warnings.
-- `npm run lint:fix`: apply available ESLint fixes, including missing braces; remaining violations still fail.
-- `npm run format`: apply Prettier formatting.
-- `npm run format:check`: check formatting without modifying files.
+## Styling and code conventions
 
-Run ESLint fixes before Prettier when applying both. The configuration deliberately reports existing violations until they are fixed; adding a rule does not rewrite application code.
+Astryx owns component styling and behavior. Tailwind CSS v4 handles application layout and custom styling through Astryx's token bridge. Brand tokens live in `src/theme/novellia.ts`; use semantic classes such as `bg-surface`, `text-primary`, and `border-border`. Generated theme assets are ignored. Installation, development startup, and builds generate them; use `npm run theme:build` after editing tokens during development.
 
-## Important behavior
+ESLint uses Next.js and React recommended/JSX-runtime presets with additional explicit rules, including required braces for control-flow bodies. It does not use the full Airbnb preset. TypeScript supplies prop types. Prettier handles formatting and Tailwind class order; it does not insert control-flow braces.
 
-- Three record types: vet visit, vaccination, medication.
-- Each record can have one manually scheduled follow-up.
-- Completing a follow-up does not change the medical event.
-- Changing its due date reopens it; editing unrelated fields preserves completion.
-- A pet deletion cascades to only that pet's records.
-- Search matches pet name/breed or record title/notes/provider; it does not search JSON details.
-- Calendar dates stay `YYYY-MM-DD`; the configured timezone determines today. Default: `America/Phoenix`.
-- No medical recommendations or inferred health scores.
+```sh
+npm run lint:fix
+npm run format
+```
 
 ## Checks
 
 ```sh
 npm run typecheck
 npm run lint
+npm run format:check
 npm test
 npm run build
-npm run format:check
 ```
 
-Create a dedicated test database once:
+Create the dedicated test database once, then migrate it whenever the schema changes:
 
 ```sh
 docker compose exec db createdb -U novellia novellia_test
@@ -106,56 +107,24 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Integration tests refuse to erase a database unless its name is exactly `novellia_test`. Browser tests create and remove their own fixtures and run against the test environment on port 3001. Do not run tests against a shared hosted demo.
+Integration setup and cleanup refuse destructive operations unless the PostgreSQL database name is exactly `novellia_test`; resources are still closed after failure. Integration tests erase test data. Browser tests create and remove fixtures, with guarded direct database fixtures for fixed timestamps and appointment zones. Never point either suite at a shared hosted demo.
 
-For Windows browser tests with the server already running in WSL, set `PLAYWRIGHT_EXTERNAL_SERVER=1` and run the Playwright CLI with Windows Node. Older Ubuntu distributions may not support the current Chromium binary; the application itself has no browser OS dependency.
+The default browser command starts a test server on port 3001. If using Windows Chromium against WSL, run the application in WSL with `.env.test`, set `PLAYWRIGHT_EXTERNAL_SERVER=1` in the Windows test shell, and optionally set `PLAYWRIGHT_BASE_URL`. The external server must use the test database. Failure screenshots are retained; tracing is off because of an observed local streaming stall. Enable it elsewhere with `npm run test:e2e -- --trace on`.
 
-Failure screenshots are retained. Tracing is off by default because the local Windows/WSL setup stalled streamed pages with the recorder enabled; use `npm run test:e2e -- --trace on` to enable it in another environment.
+See [verification](docs/verification.md) for the last completed checks and known gaps. A documentation refresh is not a new test run.
 
-## Deploy to Vercel
+## Deployment
 
-Use Prisma Postgres with a pooled PostgreSQL connection for `DATABASE_URL`. Keep a separate migration connection in `DIRECT_URL`. Runtime connections use `@prisma/adapter-pg`, a bounded pg pool, and Vercel's pool lifecycle helper.
+The target is one Next.js Node-runtime app on Vercel with Prisma Postgres. Runtime uses a PostgreSQL TCP connection, `@prisma/adapter-pg`, and a bounded pool attached to Vercel's lifecycle helper. Keep Preview and Production databases separate. Installation/build generates Prisma Client and the Astryx theme; migration, seed, and reset are never automatic build steps.
 
-Follow [the deployment runbook](docs/deployment.md). Preview and Production must use different databases. Builds generate Prisma Client but never seed, reset, or automatically migrate the hosted database.
+Follow [the deployment runbook](docs/deployment.md), including timezone dataset packaging and remote persistence checks. **Hosted deployment is not yet verified.** The last provisioning attempt required the account owner's Prisma marketplace terms step.
 
-## Care providers
+## Tools, AI, and tradeoffs
 
-Records select a reusable vet or clinic, or create one in a dialog without leaving the record form. Manage names, contact details, and archived entries under Providers. Archive keeps all historical links; permanent deletion is only allowed without linked records. Provider names are unique ignoring case and extra whitespace.
+OpenAI Codex assisted with planning, implementation, debugging, tests, documentation, and browser review. The owner should rehearse the actual request path and record-type extension before presenting.
 
-Run `npm run db:migrate` before starting this version against an existing database. The migrations preserve legacy provider names and record links. See [RFC 009](docs/rfcs/009-care-providers.md) for the data model and request paths.
+Next.js/React provide rendering and the HTTP boundary; Astryx/Tailwind provide UI; Prisma/PostgreSQL provide persistence; Zod validates input; Photon and geo-tz resolve clinic locations; Temporal handles timezone conversion; Vitest, Playwright, and axe provide checks. Photon/OpenStreetMap attribution appears beside address search. Prisma tooling has pinned `deepmerge-ts` and `mysql2` overrides; no MySQL runtime is used. Review these overrides when upgrading.
 
-Provider contact forms validate and format U.S. phone numbers and store address line 1, line 2, city, state, and ZIP separately. Optional street-address search uses Photon without API keys or signup. Manual entry works even when lookup is unavailable. Existing address text is retained in address line 1 for review; no automatic guesses are made about city/state/ZIP.
+Accepted limits: last-successful-write-wins edits, one follow-up per record, application-side follow-up classification/sorting for demo scale, and JSON details that are less convenient for SQL reporting. No authentication, uploads, OCR, external notifications, recurrence, clinic-system integrations, or clinical audit trail.
 
-## Add a record type
-
-See [RFC 004](docs/rfcs/004-medical-records.md) and [the extension exercise](docs/walkthrough.md#extension-rehearsal). Shared columns live in PostgreSQL; type-specific JSON is checked by a Zod discriminated union. UI field and detail maps are exhaustive.
-
-## Tools and AI
-
-OpenAI Codex assisted with planning, implementation, debugging, tests, documentation, and browser review. The owner should review the request paths and rehearse an extension before the interview.
-
-Next.js and React provide the UI/server boundary. Astryx provides accessible component behavior and theme tokens. Prisma makes persistence explicit, PostgreSQL works locally and on Vercel, and Zod validates untrusted inputs. Vitest, Playwright, and axe check business rules, real browser behavior, and automated accessibility rules.
-
-Two transitive dependency overrides (`deepmerge-ts`, `mysql2`) select patched releases used by Prisma tooling. They are locked and must be rechecked when upgrading Prisma. No MySQL runtime is used.
-
-## Deliberate limits
-
-No authentication, ownership isolation, uploads, OCR, clinic integrations, external notifications, or clinical audit trail. Concurrent edits are last successful write wins. JSON details trade SQL reporting convenience for easy record-type extension. A public demo is not suitable for real medical or owner information.
-
-Future authentication would add an owner identity and ownership on pets, migrate existing demo data deliberately, and require an authenticated owner scope in every service read and write. Record access must inherit the pet's ownership check. Filtering the interface alone would not secure the API.
-
-See [verification and remaining deployment work](docs/verification.md) for checks actually performed and the provider setup still required.
-
-## Timestamp display
-
-Completed, added, and updated timestamps are stored as PostgreSQL timestamptz and serialized as full UTC ISO instants. The shared LocalTimestamp component displays their dates in each visitor's browser timezone; its tooltip includes the local time and timezone. The initial server render uses a brief placeholder until the browser timezone is available, preventing a hydration mismatch or a misleading UTC date.
-
-Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE defines today for historical-date validation and is the fallback for legacy reminders whose provider location is unresolved. Follow-ups use their clinic timezone when resolved; scheduled appointments become overdue at their exact instant. Browser-local timestamp display does not change stored calendar dates. See RFC 010 for clinic scheduling.
-
-### Clinic appointments
-
-Follow-ups select their own vet or clinic. Enter an optional appointment time in that clinic's local time; the form and saved record show both your local time and the clinic time, with the difference calculated for the appointment date. Clinic timezones are derived from saved addresses. Save an existing provider's complete address to resolve its location before scheduling a time.
-
-Apply migrations with `npm run db:migrate` and `npm run db:test:migrate`. Existing reminders are preserved. Manual addresses remain usable for date-only reminders; timed appointments require a resolved address. Photon lookup can be unavailable. Select an address suggestion to correct an unmatched address, or retry later if the service is unavailable.
-
-See [RFC 010](docs/rfcs/010-clinic-scheduling.md) for data fields, daylight-saving rules, deployment packaging, and limitations. Uses geo-tz for geographic boundaries and the Temporal polyfill for timezone conversion.
+Future authentication must scope every server read and write to an owner/workspace, including provider management and records through their pets. Hiding controls would not secure the API. [Known API limitations](docs/verification.md#known-limitations) are documented separately from intended behavior.
