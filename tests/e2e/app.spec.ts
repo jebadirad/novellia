@@ -130,9 +130,7 @@ test('filters persist through reload and query errors are shown', async ({ page,
   ).toBeVisible();
 });
 
-test('malformed payloads, invalid IDs, unknown fields, and cross-pet access are rejected', async ({
-  request,
-}) => {
+test('malformed payloads, invalid IDs, and unknown fields are rejected', async ({ request }) => {
   expect(
     (
       await request.post('/api/pets', {
@@ -248,4 +246,46 @@ test('keyboard navigation can discard edits, and missing items offer a way back'
   await page.goto('/pets/00000000-0000-4000-8000-000000000000');
   await expect(page.getByRole('heading', { name: 'This page wandered off.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Back to your pets' })).toBeVisible();
+});
+
+test('editing can clear optional details and remove a completed follow-up without losing the record', async ({
+  page,
+  request,
+}) => {
+  const created = await request.post(`/api/pets/${petId}/records`, {
+    data: {
+      type: 'vet_visit',
+      title: 'Clear optional fields',
+      occurredOn: today,
+      details: { reason: 'Keep this reason', assessment: 'Clear this assessment' },
+      notes: 'Clear these notes',
+      followUpOn: addDays(today, 2),
+      followUpProviderId: providerId,
+      followUpNote: 'Old follow-up',
+    },
+  });
+  expect(created.status()).toBe(201);
+  const recordId = (await created.json()).id;
+  const url = `/api/pets/${petId}/records/${recordId}`;
+  expect((await request.patch(`${url}/follow-up`, { data: { completed: true } })).status()).toBe(
+    200,
+  );
+  await page.goto(`/pets/${petId}/records/${recordId}/edit`);
+  await page.getByRole('textbox', { name: 'Assessment' }).fill('');
+  await page.getByRole('textbox', { name: 'Additional notes' }).fill('');
+  await page.getByRole('checkbox', { name: 'Add a follow-up' }).uncheck();
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Clear optional fields', exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  expect(await (await request.get(url)).json()).toMatchObject({
+    details: { reason: 'Keep this reason', assessment: null },
+    notes: null,
+    followUpOn: null,
+    followUpProviderId: null,
+    followUpNote: null,
+    followUpCompletedAt: null,
+  });
+  await expect(page.getByRole('button', { name: 'Reopen' })).toHaveCount(0);
 });

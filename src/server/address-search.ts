@@ -58,7 +58,13 @@ export function photonSuggestions(payload: unknown): AddressSuggestion[] {
     })
     .filter(
       (address, index, addresses) =>
-        addresses.findIndex((other) => other.label === address.label) === index,
+        // Identical labels can describe conflicting locations near timezone boundaries.
+        addresses.findIndex(
+          (other) =>
+            other.label === address.label &&
+            other.latitude === address.latitude &&
+            other.longitude === address.longitude,
+        ) === index,
     )
     .slice(0, 5);
 }

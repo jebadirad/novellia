@@ -128,3 +128,5 @@ Next.js/React provide rendering and the HTTP boundary; Astryx/Tailwind provide U
 Accepted limits: last-successful-write-wins edits, one follow-up per record, application-side follow-up classification/sorting for demo scale, and JSON details that are less convenient for SQL reporting. No authentication, uploads, OCR, external notifications, recurrence, clinic-system integrations, or clinical audit trail.
 
 Future authentication must scope every server read and write to an owner/workspace, including provider management and records through their pets. Hiding controls would not secure the API. [Known API limitations](docs/verification.md#known-limitations) are documented separately from intended behavior.
+
+See the [test coverage map](docs/testing.md) for the behaviors each suite protects, database isolation rules, and remaining release checks.

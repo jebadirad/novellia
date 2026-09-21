@@ -42,12 +42,42 @@ it('bootstraps an empty schema, repeats safely, and reconciles the old applied n
     );
     await reconcileSchedulingMigration(url.toString());
     run('--import', 'tsx', 'scripts/migrate.ts');
-    // A modified or failed history entry must not be silently blessed.
-    await pool.query(
-      `UPDATE "${schema}"."_prisma_migrations" SET migration_name = $1, checksum = 'wrong' WHERE migration_name = $2`,
-      ['20260920180000_clinic_scheduling', '20260920230000_clinic_scheduling'],
-    );
-    await expect(reconcileSchedulingMigration(url.toString())).rejects.toThrow('manual review');
+    const saved = (
+      await pool.query(`SELECT * FROM "${schema}"."_prisma_migrations" WHERE migration_name = $1`, [
+        '20260920230000_clinic_scheduling',
+      ])
+    ).rows[0];
+    const history = () =>
+      pool
+        .query(`SELECT * FROM "${schema}"."_prisma_migrations" ORDER BY id`)
+        .then((result) => result.rows);
+    for (const failure of ['checksum', 'unfinished', 'duplicate']) {
+      await pool.query(
+        `UPDATE "${schema}"."_prisma_migrations" SET migration_name = $1, checksum = $2, finished_at = $3 WHERE id = $4`,
+        [
+          '20260920180000_clinic_scheduling',
+          failure === 'checksum' ? 'wrong' : saved.checksum,
+          failure === 'unfinished' ? null : saved.finished_at,
+          saved.id,
+        ],
+      );
+      let duplicateId: string | undefined;
+      if (failure === 'duplicate') {
+        duplicateId = randomUUID();
+        await pool.query(
+          `INSERT INTO "${schema}"."_prisma_migrations" (id, checksum, finished_at, migration_name, started_at, applied_steps_count) VALUES ($1, $2, $3, $4, $3, 1)`,
+          [duplicateId, saved.checksum, saved.finished_at, '20260920230000_clinic_scheduling'],
+        );
+      }
+      const before = await history();
+      await expect(reconcileSchedulingMigration(url.toString())).rejects.toThrow('manual review');
+      expect(await history()).toEqual(before);
+      if (duplicateId) {
+        await pool.query(`DELETE FROM "${schema}"."_prisma_migrations" WHERE id = $1`, [
+          duplicateId,
+        ]);
+      }
+    }
   } finally {
     assertTestDatabase(process.env.DATABASE_URL);
     await pool.query(`DROP SCHEMA "${schema}" CASCADE`);
