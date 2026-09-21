@@ -24,4 +24,4 @@ Unit geocoder tests stub network responses so the suite does not depend on a pub
 
 ## Remaining release checks
 
-Hosted database credentials, Vercel cold starts, public-service availability from the deployment, direct-page refresh, and persistence across redeployment require a real deployed environment. Chromium automation and axe checks do not establish Safari/Firefox compatibility or replace a manual screen-reader review. These are explicit release checks, not claimed covered by the local suite.
+Hosted CRUD, address resolution, direct-page loads, and persistence across redeployment have been smoke-tested; see [verification](verification.md). Long-idle cold starts and sustained public-service availability remain operational checks. Chromium automation and axe checks do not establish Safari/Firefox compatibility or replace a manual screen-reader review. These are explicit release checks, not claimed covered by the local suite.

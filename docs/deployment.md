@@ -4,9 +4,9 @@ Use `npm run db:migrate` for both fresh databases and upgrades. It reconciles th
 
 ## Provision
 
-Create a Vercel project named novellia-pets and two Prisma Postgres databases: one Production and one Preview. Choose a plan appropriate to the demo and verify the current account limits and terms during provisioning.
+Project `novellia-pets` is deployed under `jebadirads-projects` at https://novellia-pets.vercel.app. Separate free Prisma Postgres resources `novellia-production` and `novellia-preview` are connected only to their matching environments. Both use iad1. Local development still uses Docker PostgreSQL.
 
-Prisma's marketplace integration may require the account owner to accept its terms in a browser. The CLI cannot complete provisioning until that step is done.
+The Prisma marketplace terms were accepted by the account owner. Browser and CLI must use the same Vercel account; the terms link returns 404 when opened under the wrong account.
 
 ## Environment variables
 
@@ -55,7 +55,7 @@ Vercel can roll back application code, but rolling back a deployment does not un
 - [Prisma ORM 7 on Vercel](https://www.prisma.io/docs/orm/v7/prisma-client/deployment/serverless/deploy-to-vercel)
 - [Vercel SQLite storage limitations](https://vercel.com/kb/guide/is-sqlite-supported-in-vercel)
 
-Actual live deployment evidence and remaining account setup are recorded in verification.md.
+Live deployment evidence is recorded in verification.md. GitHub authentication and the repository connection are established. Vercel is connected to `jebadirad/novellia`, with `main` as the production branch and automatic Git deployments enabled. Other branches use Preview. Direct deployment remains available with `npx vercel deploy --prod --yes`. A post-connection Git-triggered deployment has not yet been exercised.
 
 ## Migration history upgrade
 
@@ -64,3 +64,22 @@ The scheduling migration was renamed from `20260920180000_clinic_scheduling` to 
 Always run `npm run db:migrate` before `npm run db:dev` on an existing checkout. The wrapper uses DIRECT_URL when supplied, otherwise DATABASE_URL. Fresh databases need no reconciliation. For an existing successfully applied old migration, it checks the exact SQL checksum and absence of conflicting history, then changes only that ledger entry's name in a transaction. It does not rerun the SQL or reset application data. It then invokes Prisma migrate deploy. Repeating the command is safe.
 
 A failed, modified, or duplicate active entry stops the command without changing history. Inspect the target database and Prisma migration status before repairing such a history; do not reset data or mark migrations applied merely to bypass the error. For a failed old scheduling migration on a clean database, confirm its SQL made no changes before using Prisma migrate resolve --rolled-back with the old name, then rerun npm run db:migrate. The old first statement failed when CareProvider did not exist, but inspect the actual failure rather than assuming this applies to every database.
+
+## Current project commands
+
+The committed vercel.json pins Next.js, npm ci, npm run build, and iad1; package.json selects Node 24. Secrets and local artifacts are excluded by .vercelignore. Migrations and seeds never run during a deployment build.
+
+Pull each environment into its own ignored file:
+
+```sh
+npx vercel env pull .env.vercel-production --environment production --yes
+npx vercel env pull .env.vercel-preview --environment preview --yes
+```
+
+Vercel redacts custom Secret values during env pull. For the currently provisioned Prisma Postgres databases, the integration-provided DATABASE_URL is the PostgreSQL TCP connection used for both runtime and migrations. Explicitly set DIRECT_URL from that pulled DATABASE_URL in the migration process so neither a redacted placeholder nor the local .env can select the wrong database:
+
+```sh
+node --env-file=.env.vercel-production --import tsx -e "process.env.DIRECT_URL = process.env.DATABASE_URL; import('./scripts/migrate.ts')"
+```
+
+Use the preview file instead for Preview. Inspect the target environment before running. Keep both downloaded files ignored and private. Repeated migrations are safe; only initialize a new dedicated demo database with the seed.

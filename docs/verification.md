@@ -2,7 +2,7 @@
 
 ## Evidence as of September 20, 2026
 
-This records checks completed during implementation, not a guarantee about every later revision. The latest coverage sweep passed lint, type checking, formatting, 84 unit tests, 13 PostgreSQL integration tests, a production build, and all 25 Chromium browser tests against that production build. Hosted checks remain pending. See the [coverage map](testing.md).
+This records checks completed during implementation, not a guarantee about every later revision. The latest coverage sweep passed lint, type checking, formatting, 84 unit tests, 13 PostgreSQL integration tests, a production build, and all 25 Chromium browser tests against that production build. Hosted smoke checks and redeployment persistence are also verified below. See the [coverage map](testing.md).
 
 | Check                   | Latest recorded result                                                                                                                                                                   |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -26,11 +26,15 @@ Local development uses Docker PostgreSQL with a named volume. Integration and br
 
 Windows Chromium was used against WSL. The older Ubuntu distribution could not run the installed Linux Chromium. Tracing is off by default after observed streamed-page stalls with recording enabled; occasional initial-load stalls were also observed earlier. Their root cause is unconfirmed. The latest complete 25-test run passed without retries.
 
-## Hosted deployment remains pending
+## Hosted deployment verified
 
-The last recorded Vercel CLI provisioning attempt stopped at Prisma marketplace terms acceptance. This refresh did not inspect account state. No live deployment, hosted CRUD, or persistence across Vercel redeployment is claimed verified.
+Live application: https://novellia-pets.vercel.app, project novellia-pets under jebadirads-projects. Separate free Prisma Postgres resources in iad1 serve Production and Preview. All six migrations and the fictional seed were applied independently to each. A production-only fixture was confirmed absent from Preview.
 
-Complete the account step, provision separate Preview/Production databases, then follow [deployment.md](deployment.md). Validate the deployed address-to-timezone flow as well as CRUD and persistence. Local database survival and packaged build assets do not replace remote checks.
+Remote smoke checks verified pet creation, all three record types, partial updates preserving schedules/completion, complete/reopen idempotence, search, and deletion. A provider using a public New York address resolved to America/New_York on Vercel, exercising the packaged geo-tz boundary assets. The browser displayed the clinic's 9 AM EDT appointment as 6 AM MST locally. Main pages and direct pet/record URLs returned 200, and the rendered dashboard loaded successfully.
+
+A second successful production deployment preserved the temporary pet and all three saved records. Those smoke-test fixtures were then removed by their exact IDs, leaving the fictional demo data intact. Production deployment ID: dpl_8zhamJqDoUw9RnYK52A4xbzUrdCW. No database migration or seed ran during the Vercel build.
+
+GitHub authentication initially blocked a redeployment until the owner connected the matching GitHub account. That connection is now established and CLI deployment succeeds. The repository connection is now verified as jebadirad/novellia, with main as the production branch and automatic Git deployments enabled. A post-connection Git push has not yet been exercised. See [deployment.md](deployment.md).
 
 ## Known limitations
 
@@ -43,7 +47,7 @@ Complete the account step, provision separate Preview/Production databases, then
 
 ## Interview handoff
 
-The repository includes a master design, ten RFCs, setup/deployment instructions, and a [request-path walkthrough](walkthrough.md). The owner-led extension rehearsal and Loom recording remain human handoff steps. Describe the app as locally verified and deployment-ready in structure, not as remotely deployed and proven.
+The repository includes a master design, ten RFCs, setup/deployment instructions, and a [request-path walkthrough](walkthrough.md). The owner-led extension rehearsal and Loom recording remain human handoff steps. Describe the app as deployed with the local suites and hosted smoke checks listed here; the Loom and owner-led extension rehearsal remain separate handoff steps.
 
 ## Fresh setup and PATCH verification
 

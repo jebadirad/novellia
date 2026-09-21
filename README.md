@@ -1,5 +1,7 @@
 # Novellia Pets
 
+**Live demo:** https://novellia-pets.vercel.app
+
 A shared pet-owner medical-record organizer built with Next.js, Astryx, Tailwind, Prisma, and PostgreSQL. Manage pets, typed medical history, reusable care providers, date-only reminders, and clinic appointments.
 
 **Shared demo: use fictional information.** There is no authentication or ownership isolation; visitors can edit the same data. This is an owner organizer, not a clinical audit system or medical-advice tool.
