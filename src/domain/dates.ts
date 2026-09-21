@@ -26,7 +26,7 @@ export function formatDate(day: string | null, compact = false): string {
     timeZone: 'UTC',
     month: compact ? 'short' : 'long',
     day: 'numeric',
-    ...(compact ? {} : { year: 'numeric' as const }),
+    year: 'numeric',
   }).format(toDate(day)!);
 }
 /** Timestamps represent instants; convert before choosing the displayed calendar day. */
