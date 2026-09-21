@@ -12,7 +12,13 @@ export function ProviderPicker({
   onChange,
   error,
   onAdd,
+  name = 'providerId',
+  label = 'Vet or clinic',
+  optional = true,
 }: {
+  name?: string;
+  label?: string;
+  optional?: boolean;
   providers: ProviderDto[];
   value: string;
   onChange: (id: string) => void;
@@ -38,10 +44,10 @@ export function ProviderPicker({
     [items],
   );
   return (
-    <div data-field="providerId" className="min-w-0">
+    <div data-field={name} className="min-w-0">
       <Typeahead
-        label="Vet or clinic"
-        isOptional
+        label={label}
+        isOptional={optional}
         value={items.find((p) => p.id === value) ?? null}
         onChange={(p) => onChange(p?.id ?? '')}
         searchSource={source}

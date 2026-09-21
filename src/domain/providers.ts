@@ -23,4 +23,6 @@ export type ProviderDto = ProviderInput & {
   id: string;
   archivedAt: string | null;
   recordCount: number;
+  followUpCount: number;
+  timeZone: string | null;
 };

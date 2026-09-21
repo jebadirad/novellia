@@ -3,14 +3,15 @@ import { validateRecordProvider } from './providers';
 import { prisma } from './database';
 import { recordDto } from './serialize';
 import { AppError, missing } from './errors';
-import { dateOnly, toDate } from '@/domain/dates';
+import { followUpData } from './follow-up-scheduling';
+import { toDate } from '@/domain/dates';
 import type { RecordInput, RecordQuery } from '@/domain/schemas';
 import type { Prisma } from '@/generated/prisma/client';
 
 export async function getRecord(petId: string, id: string) {
   const record = await prisma.medicalRecord.findFirst({
     where: { id, petId },
-    include: { pet: true, provider: true },
+    include: { pet: true, provider: true, followUpProvider: true },
   });
   if (!record) {
     throw missing();
@@ -40,7 +41,7 @@ export async function listRecords(query: RecordQuery) {
   const [records, total] = await Promise.all([
     prisma.medicalRecord.findMany({
       where,
-      include: { pet: true, provider: true },
+      include: { pet: true, provider: true, followUpProvider: true },
       orderBy: [{ occurredOn: direction }, { createdAt: direction }, { id: 'asc' }],
       skip: (query.page - 1) * 20,
       take: 20,
@@ -51,7 +52,10 @@ export async function listRecords(query: RecordQuery) {
 }
 function recordData(input: RecordInput) {
   return {
-    ...input,
+    title: input.title,
+    type: input.type,
+    providerId: input.providerId,
+    notes: input.notes,
     occurredOn: toDate(input.occurredOn)!,
     followUpOn: toDate(input.followUpOn),
     followUpNote: input.followUpOn ? input.followUpNote : null,
@@ -66,8 +70,8 @@ export async function createRecord(petId: string, input: RecordInput) {
     await validateRecordProvider(tx, input.providerId);
     return recordDto(
       await tx.medicalRecord.create({
-        data: { ...recordData(input), petId },
-        include: { pet: true, provider: true },
+        data: { ...recordData(input), ...(await followUpData(tx, input)), petId },
+        include: { pet: true, provider: true, followUpProvider: true },
       }),
     );
   });
@@ -82,11 +86,11 @@ export async function updateRecord(petId: string, id: string, input: RecordInput
       throw new AppError(422, 'IMMUTABLE_TYPE', 'A saved record’s type cannot be changed.');
     }
     await validateRecordProvider(tx, input.providerId, existing.providerId);
-    const clearCompletion = !input.followUpOn || input.followUpOn !== dateOnly(existing.followUpOn);
+    const schedule = await followUpData(tx, input, existing);
     const saved = await tx.medicalRecord.update({
       where: { id, petId },
-      data: { ...recordData(input), ...(clearCompletion && { followUpCompletedAt: null }) },
-      include: { pet: true, provider: true },
+      data: { ...recordData(input), ...schedule },
+      include: { pet: true, provider: true, followUpProvider: true },
     });
     return recordDto(saved);
   });

@@ -150,4 +150,12 @@ See [verification and remaining deployment work](docs/verification.md) for check
 
 Completed, added, and updated timestamps are stored as PostgreSQL timestamptz and serialized as full UTC ISO instants. The shared LocalTimestamp component displays their dates in each visitor's browser timezone; its tooltip includes the local time and timezone. The initial server render uses a brief placeholder until the browser timezone is available, preventing a hydration mismatch or a misleading UTC date.
 
-Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE still defines today for validation and overdue/upcoming classification in this shared demo. Browser-local timestamp display does not change those shared business-day rules. No database migration or additional stored timezone is required.
+Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE defines today for historical-date validation and is the fallback for legacy reminders whose provider location is unresolved. Follow-ups use their clinic timezone when resolved; scheduled appointments become overdue at their exact instant. Browser-local timestamp display does not change stored calendar dates. See RFC 010 for clinic scheduling.
+
+### Clinic appointments
+
+Follow-ups select their own vet or clinic. Enter an optional appointment time in that clinic's local time; the form and saved record show both your local time and the clinic time, with the difference calculated for the appointment date. Clinic timezones are derived from saved addresses. Save an existing provider's complete address to resolve its location before scheduling a time.
+
+Apply migrations with `npm run db:migrate` and `npm run db:test:migrate`. Existing reminders are preserved. Manual addresses remain usable for date-only reminders; timed appointments require a resolved address. Photon lookup can be unavailable. Select an address suggestion to correct an unmatched address, or retry later if the service is unavailable.
+
+See [RFC 010](docs/rfcs/010-clinic-scheduling.md) for data fields, daylight-saving rules, deployment packaging, and limitations. Uses geo-tz for geographic boundaries and the Temporal polyfill for timezone conversion.

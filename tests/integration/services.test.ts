@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import { prisma, pool } from '../../src/server/database';
 import { createPet, deletePet, listPets, updatePet } from '../../src/server/pets';
 import {
@@ -23,6 +23,7 @@ import {
 } from '../../src/server/providers';
 import { providerSchema } from '../../src/domain/providers';
 import { testDatabaseLifecycle } from '../database-lifecycle';
+vi.mock('../../src/server/address-search', () => ({ searchAddresses: async () => [] }));
 const day = today();
 const database = testDatabaseLifecycle(prisma, pool, process.env.DATABASE_URL);
 beforeAll(database.setup);
@@ -110,6 +111,9 @@ describe('database workflows', () => {
     const b = await createPet(input);
     expect((await listPets({ q: 'LAB', page: 1 })).total).toBe(2);
     expect((await updatePet(a.id, { ...input, name: 'Luna Moon' })).name).toBe('Luna Moon');
+    const followUpProvider = await createProvider(
+      providerSchema.parse({ name: 'Follow-up clinic' }),
+    );
     const recordInput = recordInputSchema(day).parse({
       type: 'vaccination',
       title: 'Rabies booster',
@@ -117,6 +121,7 @@ describe('database workflows', () => {
       details: { vaccineName: 'Rabies' },
       followUpOn: addDays(day, 1),
       followUpNote: 'Call clinic',
+      followUpProviderId: followUpProvider.id,
     });
     const r = await createRecord(a.id, recordInput);
     const other = await createRecord(b.id, recordInput);
@@ -156,6 +161,90 @@ describe('database workflows', () => {
     expect((await getRecord(b.id, other.id)).title).toBe('Rabies booster');
     await deleteRecord(b.id, other.id);
     await deletePet(b.id);
+    await deleteProvider(followUpProvider.id);
+  });
+  it('persists clinic appointments, protects provider links, and preserves schedule snapshots', async () => {
+    const pet = await createPet(
+      petInputSchema(day).parse({ name: 'Appointment pet', species: 'cat' }),
+    );
+    const clinic = await createProvider(
+      providerSchema.parse({ name: 'California referral clinic' }),
+    );
+    await prisma.careProvider.update({
+      where: { id: clinic.id },
+      data: {
+        timeZone: 'America/Los_Angeles',
+        addressLine1: '100 Example Street',
+        city: 'El Centro',
+        state: 'CA',
+        zip: '92243',
+      },
+    });
+    const input = recordInputSchema(day).parse({
+      type: 'vet_visit',
+      title: 'Referral',
+      occurredOn: day,
+      details: { reason: 'Recheck' },
+      followUpOn: '2027-01-15',
+      followUpTime: '09:00',
+      followUpProviderId: clinic.id,
+    });
+    const record = await createRecord(pet.id, input);
+    expect(record).toMatchObject({
+      providerId: null,
+      followUpAt: '2027-01-15T17:00:00.000Z',
+      followUpTimeZone: 'America/Los_Angeles',
+      followUpTime: '09:00',
+    });
+    await expect(deleteProvider(clinic.id)).rejects.toMatchObject({ status: 409 });
+    const complete = await setFollowUpCompleted(pet.id, record.id, true);
+    // A clinic relocation must not silently reschedule a booked appointment.
+    await prisma.careProvider.update({
+      where: { id: clinic.id },
+      data: { timeZone: 'America/Phoenix' },
+    });
+    const unchanged = await updateRecord(pet.id, record.id, { ...input, notes: 'Unrelated edit' });
+    expect(unchanged.followUpAt).toBe(record.followUpAt);
+    expect(unchanged.followUpCompletedAt).toBe(complete.followUpCompletedAt);
+    const moved = await updateRecord(pet.id, record.id, { ...input, followUpTime: '10:30' });
+    expect(moved.followUpCompletedAt).toBeNull();
+    expect(moved.followUpAt).toBe('2027-01-15T17:30:00.000Z');
+    await prisma.careProvider.update({
+      where: { id: clinic.id },
+      data: {
+        timeZone: 'America/Los_Angeles',
+        addressLine1: '100 Example Street',
+        city: 'El Centro',
+        state: 'CA',
+        zip: '92243',
+      },
+    });
+    await expect(
+      createRecord(pet.id, { ...input, followUpOn: '2027-03-14', followUpTime: '02:30' }),
+    ).rejects.toMatchObject({ status: 422, code: 'AMBIGUOUS_APPOINTMENT' });
+    await archiveProvider(clinic.id, true);
+    await expect(createRecord(pet.id, input)).rejects.toMatchObject({ status: 422 });
+    await archiveProvider(clinic.id, false);
+    await updateProvider(clinic.id, providerSchema.parse({ name: clinic.name }));
+    await expect(createRecord(pet.id, input)).rejects.toMatchObject({
+      code: 'UNRESOLVED_LOCATION',
+    });
+    await expect(
+      createRecord(pet.id, { ...input, followUpTime: null, followUpProviderId: null }),
+    ).rejects.toMatchObject({ code: 'FOLLOW_UP_PROVIDER_REQUIRED' });
+    const cleared = await updateRecord(pet.id, record.id, {
+      ...input,
+      followUpOn: null,
+      followUpTime: null,
+    });
+    expect(cleared).toMatchObject({
+      followUpAt: null,
+      followUpTimeZone: null,
+      followUpProviderId: null,
+      followUpCompletedAt: null,
+    });
+    await deletePet(pet.id);
+    await deleteProvider(clinic.id);
   });
   it('paginates deterministically and keeps dashboard counts consistent', async () => {
     await seedDemo(prisma, day);

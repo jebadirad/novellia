@@ -1,4 +1,6 @@
 import 'server-only';
+import { followUpSortValue } from '@/domain/scheduling';
+import { appTimeZone } from './context';
 import { prisma } from './database';
 import { petDto, recordDto } from './serialize';
 import { missing } from './errors';
@@ -15,8 +17,7 @@ export async function getPet(id: string) {
       records: {
         where: { followUpOn: { not: null }, followUpCompletedAt: null },
         orderBy: [{ followUpOn: 'asc' }, { id: 'asc' }],
-        take: 1,
-        include: { pet: true, provider: true },
+        include: { pet: true, provider: true, followUpProvider: true },
       },
     },
   });
@@ -26,7 +27,14 @@ export async function getPet(id: string) {
   return {
     ...petDto(pet),
     recordCount: pet._count.records,
-    nextFollowUp: pet.records[0] ? recordDto(pet.records[0]) : null,
+    nextFollowUp:
+      pet.records
+        .map(recordDto)
+        .sort(
+          (a, b) =>
+            followUpSortValue(a, appTimeZone) - followUpSortValue(b, appTimeZone) ||
+            a.id.localeCompare(b.id),
+        )[0] ?? null,
   } satisfies PetSummary;
 }
 export async function listPets(query: PetQuery): Promise<PageResult<PetSummary>> {
@@ -50,8 +58,7 @@ export async function listPets(query: PetQuery): Promise<PageResult<PetSummary>>
         records: {
           where: { followUpOn: { not: null }, followUpCompletedAt: null },
           orderBy: [{ followUpOn: 'asc' }, { id: 'asc' }],
-          take: 1,
-          include: { pet: true, provider: true },
+          include: { pet: true, provider: true, followUpProvider: true },
         },
       },
     }),
@@ -61,7 +68,14 @@ export async function listPets(query: PetQuery): Promise<PageResult<PetSummary>>
     items: pets.map((pet) => ({
       ...petDto(pet),
       recordCount: pet._count.records,
-      nextFollowUp: pet.records[0] ? recordDto(pet.records[0]) : null,
+      nextFollowUp:
+        pet.records
+          .map(recordDto)
+          .sort(
+            (a, b) =>
+              followUpSortValue(a, appTimeZone) - followUpSortValue(b, appTimeZone) ||
+              a.id.localeCompare(b.id),
+          )[0] ?? null,
     })),
     total,
     page: query.page,

@@ -3,15 +3,22 @@ import AxeBuilder from '@axe-core/playwright';
 import { todayIn, addDays } from '../../src/domain/dates';
 const today = todayIn('America/Phoenix');
 let petId: string;
+let providerId: string;
 test.beforeEach(async ({ request }) => {
   const result = await request.post('/api/pets', {
     data: { name: 'Browser companion', species: 'dog', breed: 'Test breed' },
   });
   expect(result.status()).toBe(201);
   petId = (await result.json()).id;
+  const provider = await request.post('/api/providers', {
+    data: { name: `Browser clinic ${petId}` },
+  });
+  expect(provider.status()).toBe(201);
+  providerId = (await provider.json()).id;
 });
 test.afterEach(async ({ request }) => {
   await request.delete(`/api/pets/${petId}`);
+  await request.delete(`/api/providers/${providerId}`);
 });
 
 test('pet creation, validation, dirty navigation, edit, and delete', async ({ page }) => {
@@ -54,6 +61,10 @@ for (const type of ['Vet visit', 'Vaccination', 'Medication']) {
       await page.getByRole('textbox', { name: 'Medication name' }).fill('Example drops');
     }
     await page.getByRole('checkbox', { name: 'Add a follow-up' }).check();
+    await page
+      .getByRole('combobox', { name: 'Follow-up vet or clinic' })
+      .fill(`Browser clinic ${petId}`);
+    await page.getByRole('option', { name: new RegExp(`Browser clinic ${petId}`) }).click();
     await page.getByLabel('Follow-up date', { exact: true }).fill(addDays(today, 2));
     await page.getByRole('textbox', { name: 'What needs to happen?' }).fill('Call clinic');
     await page.getByRole('button', { name: 'Save record', exact: true }).click();

@@ -169,7 +169,7 @@ export function ProviderActions({
         Archiving hides this provider from new selections. Existing records keep their link and
         provider name.
       </p>
-      {provider.recordCount === 0 ? (
+      {provider.recordCount === 0 && provider.followUpCount === 0 ? (
         <DeleteAction
           url={`/api/providers/${provider.id}`}
           title="Delete provider"
@@ -178,7 +178,7 @@ export function ProviderActions({
         />
       ) : (
         <p className="text-sm text-secondary">
-          Permanent deletion is unavailable while medical records are linked.
+          Permanent deletion is unavailable while medical records or follow-ups are linked.
         </p>
       )}
       {error && (
@@ -194,7 +194,7 @@ export function ProviderActions({
           }
         }}
         title={provider.archivedAt ? 'Restore provider?' : 'Archive provider?'}
-        description={`${provider.archivedAt ? 'Make' : 'Hide'} ${provider.name} ${provider.archivedAt ? 'available for new records again.' : 'from new selections.'} All ${provider.recordCount} linked records will stay.${error ? ` ${error}` : ''}`}
+        description={`${provider.archivedAt ? 'Make' : 'Hide'} ${provider.name} ${provider.archivedAt ? 'available for new records again.' : 'from new selections.'} All ${provider.recordCount} linked records and ${provider.followUpCount} follow-ups will stay.${error ? ` ${error}` : ''}`}
         actionLabel={provider.archivedAt ? 'Restore provider' : 'Archive provider'}
         isActionLoading={pending}
         onAction={archive}

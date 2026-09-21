@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getFollowUps } from '@/server/overview';
 import { petOptions } from '@/server/pets';
 import { today } from '@/server/context';
-import { followUpGroup, followUpLabels, type FollowUpGroup } from '@/domain/dates';
+import { followUpLabels, type FollowUpGroup } from '@/domain/dates';
 import { followUpQuerySchema, cleanQuery, type SearchParams } from '@/domain/schemas';
 import { PageHeading, Panel, FollowUpList, EmptyState } from '@/components/display';
 import { Filters } from '@/components/filters';
@@ -57,10 +57,7 @@ export default async function FollowUps({ searchParams }: { searchParams: Promis
         </p>
       ) : records.length ? (
         groups.map((group) => {
-          const items = records.filter(
-            (record) =>
-              followUpGroup(record.followUpOn!, record.followUpCompletedAt, day) === group,
-          );
+          const items = records.filter((record) => record.followUpStatus === group);
           return items.length ? (
             <section
               className="mt-6 [&>h2]:mb-3 [&>h2]:text-xs [&>h2]:font-semibold [&>h2]:tracking-wide [&>h2]:text-secondary"

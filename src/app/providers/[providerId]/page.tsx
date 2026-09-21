@@ -33,6 +33,13 @@ export default async function ProviderPage({
               <dd className="whitespace-pre-wrap">{formatAddress(provider) || 'Not recorded'}</dd>
             </div>
             <div>
+              <dt className="text-secondary">Timezone from address</dt>
+              <dd>
+                {provider.timeZone?.replaceAll('_', ' ') ||
+                  'Address not resolved for appointment scheduling'}
+              </dd>
+            </div>
+            <div>
               <dt className="text-secondary">Notes</dt>
               <dd className="whitespace-pre-wrap">{provider.notes || 'Not recorded'}</dd>
             </div>
@@ -41,6 +48,7 @@ export default async function ProviderPage({
             {provider.recordCount} linked medical{' '}
             {provider.recordCount === 1 ? 'record' : 'records'}
           </p>
+          <p className="mt-2 text-sm">{provider.followUpCount} linked follow-ups</p>
           {provider.recordCount > 0 && (
             <Link
               className="mt-2 inline-block text-sm text-accent underline"

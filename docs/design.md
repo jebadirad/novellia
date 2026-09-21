@@ -34,8 +34,9 @@ The lockfile pins actual package versions. Styling uses bundled CSS rather than 
 5. [Search and filtering](rfcs/005-search.md)
 6. [Overview dashboard](rfcs/006-dashboard.md)
 7. [Follow-ups](rfcs/007-follow-ups.md)
-8. [Delivery and verification](rfcs/008-delivery.md)
-9. [Reusable care providers](rfcs/009-care-providers.md)
+8. [Clinic scheduling and timezones](rfcs/010-clinic-scheduling.md)
+9. [Delivery and verification](rfcs/008-delivery.md)
+10. [Reusable care providers](rfcs/009-care-providers.md)
 
 Each RFC records screen structure, behavior, data dependencies, interfaces, tradeoffs, and acceptance checks.
 
@@ -70,4 +71,8 @@ These are future changes, not partially implemented abstractions.
 
 Completed, added, and updated timestamps are stored as PostgreSQL timestamptz and serialized as full UTC ISO instants. The shared LocalTimestamp component displays their dates in each visitor's browser timezone; its tooltip includes the local time and timezone. The initial server render uses a brief placeholder until the browser timezone is available, preventing a hydration mismatch or a misleading UTC date.
 
-Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE still defines today for validation and overdue/upcoming classification in this shared demo. Browser-local timestamp display does not change those shared business-day rules. No database migration or additional stored timezone is required.
+Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE defines today for historical-date validation and is the fallback for legacy reminders whose provider location is unresolved. Follow-ups use their clinic timezone when resolved; scheduled appointments become overdue at their exact instant. Browser-local timestamp display does not change stored calendar dates. See RFC 010 for clinic scheduling.
+
+## Clinic scheduling
+
+[RFC 010](rfcs/010-clinic-scheduling.md) extends follow-ups with a distinct clinic selection, an optional appointment time, address-derived timezones, and browser-local versus clinic-time displays. Existing appointments retain their original timezone snapshot when a provider moves.

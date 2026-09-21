@@ -73,6 +73,18 @@ const common = {
   notes: optionalText(5000),
   followUpOn: optionalDate,
   followUpNote: optionalText(240),
+  followUpProviderId: z
+    .union([z.uuid(), z.literal(''), z.null()])
+    .optional()
+    .transform((v) => v || null),
+  followUpTime: z
+    .union([
+      z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Enter a time as HH:mm.'),
+      z.literal(''),
+      z.null(),
+    ])
+    .optional()
+    .transform((v) => v || null),
 };
 export const recordSchema = z.discriminatedUnion('type', [
   z.strictObject({ ...common, type: z.literal('vet_visit'), details: visitDetails }),
@@ -107,6 +119,20 @@ export const recordMeta = {
 >;
 export function recordInputSchema(today: string) {
   return recordSchema.superRefine((value, ctx) => {
+    if (value.followUpTime && !value.followUpOn) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['followUpOn'],
+        message: 'Choose an appointment date.',
+      });
+    }
+    if (value.followUpTime && !value.followUpProviderId) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['followUpProviderId'],
+        message: 'Choose the appointment’s vet or clinic.',
+      });
+    }
     if (value.occurredOn > today) {
       ctx.addIssue({
         code: 'custom',

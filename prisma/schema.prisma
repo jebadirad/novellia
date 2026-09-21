@@ -28,11 +28,15 @@ model MedicalRecord {
   title                 String   @db.VarChar(120)
   occurredOn            DateTime @db.Date
   providerId            String?  @db.Uuid
-  provider              CareProvider? @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  provider              CareProvider? @relation("RecordProvider", fields: [providerId], references: [id], onDelete: Restrict)
   notes                 String?
   details               Json     @db.JsonB
   detailsVersion        Int      @default(1)
   followUpOn            DateTime? @db.Date
+  followUpProviderId    String? @db.Uuid
+  followUpProvider      CareProvider? @relation("FollowUpProvider", fields: [followUpProviderId], references: [id], onDelete: Restrict)
+  followUpAt            DateTime? @db.Timestamptz(3)
+  followUpTimeZone      String? @db.VarChar(100)
   followUpNote          String?  @db.VarChar(240)
   followUpCompletedAt   DateTime? @db.Timestamptz(3)
   createdAt             DateTime @default(now()) @db.Timestamptz(3)
@@ -42,6 +46,7 @@ model MedicalRecord {
   @@index([type, occurredOn])
   @@index([followUpCompletedAt, followUpOn])
   @@index([providerId])
+  @@index([followUpProviderId])
 }
 
 model CareProvider {
@@ -59,5 +64,7 @@ model CareProvider {
   archivedAt     DateTime? @db.Timestamptz(3)
   createdAt      DateTime @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime @updatedAt @db.Timestamptz(3)
-  records        MedicalRecord[]
+  timeZone       String? @db.VarChar(100)
+  records        MedicalRecord[] @relation("RecordProvider")
+  followUps      MedicalRecord[] @relation("FollowUpProvider")
 }

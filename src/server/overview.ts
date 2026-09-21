@@ -1,60 +1,58 @@
 import 'server-only';
+import { followUpSortValue } from '@/domain/scheduling';
+import { appTimeZone } from './context';
 import { prisma } from './database';
-import { today } from './context';
-import { addDays, toDate } from '@/domain/dates';
 import { recordDto } from './serialize';
 import { listPets } from './pets';
 import type { FollowUpQuery } from '@/domain/schemas';
 
 export async function getDashboard() {
-  const day = today();
-  const open = { followUpCompletedAt: null, followUpOn: { not: null } };
-  const [petCount, overdueCount, dueCount, attention, pets, recent] = await Promise.all([
+  const [petCount, followUps, pets, recent] = await Promise.all([
     prisma.pet.count(),
-    prisma.medicalRecord.count({ where: { ...open, followUpOn: { lt: toDate(day)! } } }),
-    prisma.medicalRecord.count({
-      where: { ...open, followUpOn: { gte: toDate(day)!, lte: toDate(addDays(day, 30))! } },
-    }),
-    prisma.medicalRecord.findMany({
-      where: { ...open, followUpOn: { lte: toDate(addDays(day, 30))! } },
-      orderBy: [{ followUpOn: 'asc' }, { id: 'asc' }],
-      take: 5,
-      include: { pet: true, provider: true },
-    }),
+    getFollowUps({ tab: 'open' }),
     listPets({ q: '', page: 1 }),
     prisma.medicalRecord.findMany({
       orderBy: [{ occurredOn: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
       take: 5,
-      include: { pet: true, provider: true },
+      include: { pet: true, provider: true, followUpProvider: true },
     }),
   ]);
   return {
     petCount,
-    overdueCount,
-    dueCount,
-    attention: attention.map(recordDto),
+    overdueCount: followUps.filter((r) => r.followUpStatus === 'overdue').length,
+    dueCount: followUps.filter((r) => r.followUpStatus === 'today' || r.followUpStatus === 'soon')
+      .length,
+    attention: followUps.filter((r) => r.followUpStatus !== 'later').slice(0, 5),
     pets: pets.items.slice(0, 6),
     recent: recent.map(recordDto),
   };
 }
 export async function getFollowUps(query: FollowUpQuery) {
-  const day = today();
   const records = await prisma.medicalRecord.findMany({
     where: {
       ...(query.petId && { petId: query.petId }),
-      followUpOn:
-        query.group === 'overdue'
-          ? { lt: toDate(day)! }
-          : query.group === 'due'
-            ? { gte: toDate(day)!, lte: toDate(addDays(day, 30))! }
-            : { not: null },
+      followUpOn: { not: null },
       followUpCompletedAt: query.tab === 'completed' ? { not: null } : null,
     },
-    include: { pet: true, provider: true },
+    include: { pet: true, provider: true, followUpProvider: true },
     orderBy:
       query.tab === 'completed'
         ? [{ followUpCompletedAt: 'desc' }, { id: 'asc' }]
-        : [{ followUpOn: 'asc' }, { id: 'asc' }],
+        : [{ followUpOn: 'asc' }, { followUpAt: 'asc' }, { id: 'asc' }],
   });
-  return records.map(recordDto);
+  return records
+    .map(recordDto)
+    .sort((a, b) =>
+      query.tab === 'completed'
+        ? 0
+        : followUpSortValue(a, appTimeZone) - followUpSortValue(b, appTimeZone) ||
+          a.id.localeCompare(b.id),
+    )
+    .filter(
+      (record) =>
+        !query.group ||
+        (query.group === 'overdue'
+          ? record.followUpStatus === 'overdue'
+          : record.followUpStatus === 'today' || record.followUpStatus === 'soon'),
+    );
 }

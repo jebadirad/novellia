@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AppointmentDisplay } from './appointment-display';
 import { LocalTimestamp } from './local-timestamp';
 import {
   PawPrint,
@@ -16,7 +17,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { Button, Badge } from './ui';
 import { FollowUpAction } from './actions';
-import { formatDate, followUpGroup, followUpLabels, petAge } from '@/domain/dates';
+import { formatDate, followUpLabels, petAge } from '@/domain/dates';
 import { recordMeta, speciesLabels, type SearchParams, type Species } from '@/domain/schemas';
 import type { PageResult, PetDto, PetSummary, RecordDto } from '@/domain/types';
 export function PageHeading({
@@ -106,11 +107,11 @@ export function TypeBadge({ type }: { type: RecordDto['type'] }) {
     />
   );
 }
-export function DueBadge({ record, today }: { record: RecordDto; today: string }) {
+export function DueBadge({ record }: { record: RecordDto; today: string }) {
   if (!record.followUpOn) {
     return null;
   }
-  const group = followUpGroup(record.followUpOn, record.followUpCompletedAt, today);
+  const group = record.followUpStatus!;
   return (
     <Badge
       label={followUpLabels[group]}
@@ -181,7 +182,7 @@ export function PetCard({ pet, today }: { pet: PetSummary; today: string }) {
         {pet.nextFollowUp ? (
           <Link href={recordHref(pet.nextFollowUp)}>
             <CalendarDays size={15} />
-            {pet.nextFollowUp.followUpOn! < today ? 'Overdue · ' : 'Next follow-up · '}
+            {pet.nextFollowUp.followUpStatus === 'overdue' ? 'Overdue · ' : 'Next follow-up · '}
             {formatDate(pet.nextFollowUp.followUpOn, true)}
           </Link>
         ) : (
@@ -304,6 +305,14 @@ export function FollowUpList({ records, today }: { records: RecordDto[]; today: 
                 `Due ${formatDate(record.followUpOn, true)}`
               )}
             </p>
+            {record.followUpProvider && <p>{record.followUpProvider.name}</p>}
+            {record.followUpAt && record.followUpTimeZone && (
+              <AppointmentDisplay
+                instant={record.followUpAt}
+                timeZone={record.followUpTimeZone}
+                providerName={record.followUpProvider?.name ?? 'Clinic'}
+              />
+            )}
             <DueBadge record={record} today={today} />
           </div>
           <FollowUpAction record={record} />

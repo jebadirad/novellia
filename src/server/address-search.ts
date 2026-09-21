@@ -6,6 +6,11 @@ import { AppError } from './errors';
 const photonResponse = z.object({
   features: z.array(
     z.object({
+      geometry: z
+        .object({
+          coordinates: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]),
+        })
+        .optional(),
       properties: z.object({
         osm_id: z.union([z.string(), z.number()]).optional(),
         osm_type: z.string().optional(),
@@ -24,7 +29,7 @@ const photonResponse = z.object({
 export function photonSuggestions(payload: unknown): AddressSuggestion[] {
   const result = photonResponse.parse(payload);
   return result.features
-    .flatMap(({ properties: p }, index) => {
+    .flatMap(({ properties: p, geometry }, index) => {
       // Never put a city, business name, or county into the street-address field.
       if (p.countrycode?.toUpperCase() !== 'US' || !p.street) {
         return [];
@@ -43,6 +48,8 @@ export function photonSuggestions(payload: unknown): AddressSuggestion[] {
             .filter(Boolean)
             .join(', '),
           addressLine1,
+          latitude: geometry?.coordinates[1],
+          longitude: geometry?.coordinates[0],
           city: p.city ?? null,
           state,
           zip: zip.success ? zip.data : null,

@@ -1,3 +1,4 @@
+import type { FollowUpGroup } from './dates';
 import type { PetInput, RecordInput } from './schemas';
 import type { ProviderDto } from './providers';
 export type PetDto = PetInput & { id: string; createdAt: string; updatedAt: string };
@@ -5,6 +6,10 @@ export type RecordDto = RecordInput & {
   id: string;
   petId: string;
   provider: Omit<ProviderDto, 'recordCount'> | null;
+  followUpProvider: ProviderDto | null;
+  followUpAt: string | null;
+  followUpTimeZone: string | null;
+  followUpStatus: FollowUpGroup | null;
   detailsVersion: number;
   followUpCompletedAt: string | null;
   createdAt: string;

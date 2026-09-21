@@ -200,6 +200,8 @@ export async function seedDemo(
             'Fictional demonstration record. Not medical advice or a treatment recommendation.',
           followUpOn: record.follow !== undefined ? toDate(addDays(day, record.follow)) : null,
           followUpNote: record.followUpNote ?? null,
+          followUpProviderId:
+            record.follow !== undefined ? providers[record.pet === 1 ? 1 : 0].id : null,
           followUpCompletedAt: record.completed ? toDate(addDays(day, -29)) : null,
         },
       });

@@ -1,5 +1,7 @@
 import type { Pet, MedicalRecord, CareProvider } from '@/generated/prisma/client';
 import { type ProviderDto } from '@/domain/providers';
+import { appointmentTime, scheduleGroup } from '@/domain/scheduling';
+import { appTimeZone } from './context';
 import { dateOnly } from '@/domain/dates';
 import { recordSchema, petSchema } from '@/domain/schemas';
 import type { PetDto, RecordDto } from '@/domain/types';
@@ -20,7 +22,11 @@ export function petDto(pet: Pet): PetDto {
   };
 }
 export function recordDto(
-  record: MedicalRecord & { pet: Pet; provider: CareProvider | null },
+  record: MedicalRecord & {
+    pet: Pet;
+    provider: CareProvider | null;
+    followUpProvider: CareProvider | null;
+  },
 ): RecordDto {
   const fields = recordSchema.parse({
     type: record.type,
@@ -31,6 +37,11 @@ export function recordDto(
     details: record.details,
     followUpOn: dateOnly(record.followUpOn),
     followUpNote: record.followUpNote,
+    followUpProviderId: record.followUpProviderId,
+    followUpTime:
+      record.followUpAt && record.followUpTimeZone
+        ? appointmentTime(record.followUpAt.toISOString(), record.followUpTimeZone)
+        : null,
   });
   return {
     ...fields,
@@ -38,6 +49,18 @@ export function recordDto(
     petId: record.petId,
     pet: petDto(record.pet),
     provider: record.provider ? providerDto(record.provider) : null,
+    followUpProvider: record.followUpProvider ? providerDto(record.followUpProvider) : null,
+    followUpAt: record.followUpAt?.toISOString() ?? null,
+    followUpTimeZone: record.followUpTimeZone,
+    followUpStatus: scheduleGroup(
+      {
+        followUpOn: fields.followUpOn,
+        followUpCompletedAt: record.followUpCompletedAt?.toISOString() ?? null,
+        followUpAt: record.followUpAt?.toISOString() ?? null,
+        followUpTimeZone: record.followUpTimeZone,
+      },
+      appTimeZone,
+    ),
     detailsVersion: record.detailsVersion,
     followUpCompletedAt: record.followUpCompletedAt?.toISOString() ?? null,
     createdAt: record.createdAt.toISOString(),
@@ -46,7 +69,7 @@ export function recordDto(
 }
 
 export function providerDto(
-  provider: CareProvider & { _count?: { records: number } },
+  provider: CareProvider & { _count?: { records: number; followUps?: number } },
 ): ProviderDto {
   return {
     name: provider.name,
@@ -62,5 +85,7 @@ export function providerDto(
     id: provider.id,
     archivedAt: provider.archivedAt?.toISOString() ?? null,
     recordCount: provider._count?.records ?? 0,
+    followUpCount: provider._count?.followUps ?? 0,
+    timeZone: provider.timeZone,
   };
 }

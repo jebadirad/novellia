@@ -1,11 +1,12 @@
 import 'server-only';
+import { resolveAddressTimeZone, sameAddress } from './provider-location';
 import { prisma } from './database';
 import { AppError, missing } from './errors';
 import { providerDto } from './serialize';
 import { normalizeProviderName, type ProviderInput, type ProviderQuery } from '@/domain/providers';
 import type { Prisma } from '@/generated/prisma/client';
 
-const counts = { _count: { select: { records: true } } } as const;
+const counts = { _count: { select: { records: true, followUps: true } } } as const;
 export async function listProviders(query: ProviderQuery) {
   return (
     await prisma.careProvider.findMany({
@@ -44,7 +45,11 @@ export async function createProvider(input: ProviderInput) {
   try {
     return providerDto(
       await prisma.careProvider.create({
-        data: { ...input, normalizedName: normalizeProviderName(input.name) },
+        data: {
+          ...input,
+          normalizedName: normalizeProviderName(input.name),
+          timeZone: await resolveAddressTimeZone(input),
+        },
         include: counts,
       }),
     );
@@ -53,11 +58,16 @@ export async function createProvider(input: ProviderInput) {
   }
 }
 export async function updateProvider(id: string, input: ProviderInput) {
+  const existing = await getProvider(id);
+  const timeZone =
+    existing.timeZone && sameAddress(existing, input)
+      ? existing.timeZone
+      : await resolveAddressTimeZone(input);
   try {
     return providerDto(
       await prisma.careProvider.update({
         where: { id },
-        data: { ...input, normalizedName: normalizeProviderName(input.name) },
+        data: { ...input, normalizedName: normalizeProviderName(input.name), timeZone },
         include: counts,
       }),
     );
@@ -83,7 +93,7 @@ export async function deleteProvider(id: string) {
       throw new AppError(
         409,
         'PROVIDER_IN_USE',
-        'This provider has linked medical records. Archive it instead.',
+        'This provider has linked medical records or follow-ups. Archive it instead.',
       );
     }
     throw error;
@@ -93,6 +103,7 @@ export async function validateRecordProvider(
   tx: Prisma.TransactionClient,
   id: string | null,
   previousId?: string | null,
+  field = 'providerId',
 ) {
   if (!id) {
     return;
@@ -105,9 +116,7 @@ export async function validateRecordProvider(
   const provider = rows[0];
   if (!provider || (provider.archivedAt && id !== previousId)) {
     throw new AppError(422, 'INVALID_PROVIDER', 'Choose an active provider.', {
-      providerId: [
-        'This provider is unavailable. Choose an active provider or clear the selection.',
-      ],
+      [field]: ['This provider is unavailable. Choose an active provider or clear the selection.'],
     });
   }
 }

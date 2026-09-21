@@ -1,3 +1,4 @@
+import { AppointmentDisplay } from '@/components/appointment-display';
 import Link from 'next/link';
 import { LocalTimestamp } from '@/components/local-timestamp';
 import { getRecord } from '@/server/records';
@@ -88,6 +89,20 @@ export default async function RecordPage({
                 <DueBadge record={record} today={today()} />
                 <h3 className="mt-4 mb-2 text-lg">{record.followUpNote || record.title}</h3>
                 <p className="mb-4 text-xs text-secondary">Due {formatDate(record.followUpOn)}</p>
+                {record.followUpProvider && (
+                  <p className="mb-3 text-sm">
+                    <Link href={`/providers/${record.followUpProvider.id}`}>
+                      {record.followUpProvider.name}
+                    </Link>
+                  </p>
+                )}
+                {record.followUpAt && record.followUpTimeZone && (
+                  <AppointmentDisplay
+                    instant={record.followUpAt}
+                    timeZone={record.followUpTimeZone}
+                    providerName={record.followUpProvider?.name ?? 'Clinic'}
+                  />
+                )}
                 {record.followUpCompletedAt && (
                   <p className="mb-4 text-xs text-secondary">
                     Completed <LocalTimestamp value={record.followUpCompletedAt} />

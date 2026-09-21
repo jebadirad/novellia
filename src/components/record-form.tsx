@@ -1,4 +1,7 @@
 'use client';
+import { TimeInput, type ISOTimeString } from '@astryxdesign/core/TimeInput';
+import { AppointmentDisplay } from './appointment-display';
+import { appointmentInstant } from '@/domain/scheduling';
 import { ProviderDialog } from './provider-dialog';
 import { ProviderPicker } from './provider-picker';
 import type { ProviderDto } from '@/domain/providers';
@@ -29,6 +32,10 @@ export function RecordForm({
   providers: ProviderDto[];
 }) {
   const [providerEntries, setProviderEntries] = useState(providers);
+  const [providerTarget, setProviderTarget] = useState<'providerId' | 'followUpProviderId'>(
+    'providerId',
+  );
+  const [editingProvider, setEditingProvider] = useState<ProviderDto | undefined>();
   const [newProviderName, setNewProviderName] = useState<string | null>(null);
   const initial = {
     type: record?.type ?? 'vet_visit',
@@ -38,6 +45,8 @@ export function RecordForm({
     notes: record?.notes ?? '',
     followUpOn: record?.followUpOn ?? '',
     followUpNote: record?.followUpNote ?? '',
+    followUpProviderId: record?.followUpProviderId ?? '',
+    followUpTime: record?.followUpTime ?? '',
   };
   const initialDetails = Object.fromEntries(
     Object.entries(record?.details ?? {}).map(([key, value]) => [key, value ?? '']),
@@ -59,7 +68,8 @@ export function RecordForm({
     setValues((current) => ({ ...current, [field]: value }));
   function providerSaved(provider: ProviderDto) {
     setProviderEntries((current) => [...current.filter((p) => p.id !== provider.id), provider]);
-    set('providerId', provider.id);
+    set(providerTarget, provider.id);
+    setEditingProvider(undefined);
     setNewProviderName(null);
   }
   function changeType(type: RecordType) {
@@ -72,6 +82,23 @@ export function RecordForm({
       set('type', type);
       setDetails({});
       setErrors({});
+    }
+  }
+  const followUpProvider = providerEntries.find((p) => p.id === values.followUpProviderId);
+  const retainedSchedule =
+    record &&
+    record.followUpProviderId === values.followUpProviderId &&
+    record.followUpOn === values.followUpOn &&
+    record.followUpTime === values.followUpTime;
+  const scheduleZone = retainedSchedule ? record.followUpTimeZone : followUpProvider?.timeZone;
+  let preview: string | null = null;
+  let scheduleError = '';
+  if (values.followUpOn && values.followUpTime && scheduleZone) {
+    try {
+      preview = appointmentInstant(values.followUpOn, values.followUpTime, scheduleZone);
+    } catch {
+      scheduleError =
+        'This time is skipped or repeated by daylight saving time. Confirm another time with the clinic.';
     }
   }
   const Fields = recordFieldComponents[values.type];
@@ -93,6 +120,8 @@ export function RecordForm({
       details,
       followUpOn: followUp ? values.followUpOn : null,
       followUpNote: followUp ? values.followUpNote : null,
+      followUpProviderId: followUp ? values.followUpProviderId : null,
+      followUpTime: followUp ? values.followUpTime : null,
     });
     if (!parsed.success) {
       const fields: FieldErrors = {};
@@ -176,9 +205,18 @@ export function RecordForm({
               <ProviderPicker
                 providers={providerEntries}
                 value={values.providerId}
-                onChange={(v) => set('providerId', v)}
+                onChange={(v) =>
+                  setValues((current) => ({
+                    ...current,
+                    providerId: v,
+                    followUpProviderId: current.followUpProviderId || v,
+                  }))
+                }
                 error={errors.providerId?.[0]}
-                onAdd={setNewProviderName}
+                onAdd={(name) => {
+                  setProviderTarget('providerId');
+                  setNewProviderName(name);
+                }}
               />
             </div>
           </div>
@@ -206,11 +244,48 @@ export function RecordForm({
           <CheckboxInput
             label="Add a follow-up"
             value={followUp}
-            onChange={setFollowUp}
+            onChange={(enabled) => {
+              setFollowUp(enabled);
+              if (enabled && !values.followUpProviderId) {
+                set('followUpProviderId', values.providerId);
+              }
+            }}
             description="Keep the next step alongside this record."
           />
           {followUp && (
             <div className="mt-5.5 flex flex-col gap-5 md:gap-5.5">
+              <ProviderPicker
+                name="followUpProviderId"
+                label="Follow-up vet or clinic"
+                optional={false}
+                providers={providerEntries}
+                value={values.followUpProviderId}
+                onChange={(id) => set('followUpProviderId', id)}
+                error={errors.followUpProviderId?.[0]}
+                onAdd={(name) => {
+                  setProviderTarget('followUpProviderId');
+                  setNewProviderName(name);
+                }}
+              />
+              {followUpProvider && (
+                <div className="text-xs text-secondary">
+                  <p>
+                    {followUpProvider.timeZone
+                      ? `Timezone from address: ${followUpProvider.timeZone.replaceAll('_', ' ')}`
+                      : 'A resolved street address is required to schedule an appointment time.'}
+                  </p>
+                  <Button
+                    label="Update provider address"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setProviderTarget('followUpProviderId');
+                      setEditingProvider(followUpProvider);
+                      setNewProviderName('');
+                    }}
+                  />
+                </div>
+              )}
               <CalendarField
                 name="followUpOn"
                 label="Follow-up date"
@@ -219,6 +294,32 @@ export function RecordForm({
                 errors={errors}
                 min={values.occurredOn}
               />
+              <div data-field="followUpTime">
+                <TimeInput
+                  label="Appointment time at clinic"
+                  isOptional
+                  hasClear
+                  hourFormat="12h"
+                  nativePicker="never"
+                  value={(values.followUpTime || undefined) as ISOTimeString | undefined}
+                  onChange={(time) => set('followUpTime', time ?? '')}
+                  width="100%"
+                  description="Leave empty for a date-only reminder. Enter the time the clinic gave you."
+                  status={
+                    errors.followUpTime?.[0] || scheduleError
+                      ? { type: 'error', message: errors.followUpTime?.[0] || scheduleError }
+                      : undefined
+                  }
+                  statusVariant="detached"
+                />
+              </div>
+              {preview && scheduleZone && (
+                <AppointmentDisplay
+                  instant={preview}
+                  timeZone={scheduleZone}
+                  providerName={followUpProvider?.name ?? 'Clinic'}
+                />
+              )}
               <TextField
                 name="followUpNote"
                 label="What needs to happen?"
@@ -252,9 +353,13 @@ export function RecordForm({
         <ProviderDialog
           providers={providerEntries}
           initialName={newProviderName}
+          provider={editingProvider}
           onSaved={providerSaved}
           onSelect={providerSaved}
-          onClose={() => setNewProviderName(null)}
+          onClose={() => {
+            setNewProviderName(null);
+            setEditingProvider(undefined);
+          }}
         />
       )}
       {guard.dialog}

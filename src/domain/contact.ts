@@ -100,7 +100,12 @@ export const addressFields = {
   zip: zipSchema,
 };
 export type Address = z.infer<z.ZodObject<typeof addressFields>>;
-export type AddressSuggestion = Omit<Address, 'addressLine2'> & { id: string; label: string };
+export type AddressSuggestion = Omit<Address, 'addressLine2'> & {
+  id: string;
+  label: string;
+  latitude?: number;
+  longitude?: number;
+};
 export function formatAddress(address: Address): string {
   const locality = [address.city, [address.state, address.zip].filter(Boolean).join(' ')]
     .filter(Boolean)
