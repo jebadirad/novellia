@@ -4,7 +4,10 @@ import { prisma } from './database';
 import { recordDto } from './serialize';
 import { AppError, missing } from './errors';
 import { followUpData } from './follow-up-scheduling';
-import { toDate } from '@/domain/dates';
+import { mergeRecordPatch } from '@/domain/record-patch';
+import { today } from './context';
+import { appointmentTime } from '@/domain/scheduling';
+import { dateOnly, toDate } from '@/domain/dates';
 import type { RecordInput, RecordQuery } from '@/domain/schemas';
 import type { Prisma } from '@/generated/prisma/client';
 
@@ -76,12 +79,33 @@ export async function createRecord(petId: string, input: RecordInput) {
     );
   });
 }
-export async function updateRecord(petId: string, id: string, input: RecordInput) {
+export async function updateRecord(petId: string, id: string, patch: Record<string, unknown>) {
   return prisma.$transaction(async (tx) => {
+    // Serialize edits and completion writes before reading fields omitted by PATCH.
+    await tx.$queryRaw`SELECT "id" FROM "MedicalRecord" WHERE "id" = ${id}::uuid AND "petId" = ${petId}::uuid FOR UPDATE`;
     const existing = await tx.medicalRecord.findFirst({ where: { id, petId } });
     if (!existing) {
       throw missing();
     }
+    const input = mergeRecordPatch(
+      {
+        type: existing.type,
+        title: existing.title,
+        occurredOn: dateOnly(existing.occurredOn),
+        providerId: existing.providerId,
+        notes: existing.notes,
+        details: existing.details,
+        followUpOn: dateOnly(existing.followUpOn),
+        followUpNote: existing.followUpNote,
+        followUpProviderId: existing.followUpProviderId,
+        followUpTime:
+          existing.followUpAt && existing.followUpTimeZone
+            ? appointmentTime(existing.followUpAt.toISOString(), existing.followUpTimeZone)
+            : null,
+      },
+      patch,
+      today(),
+    );
     if (existing.type !== input.type) {
       throw new AppError(422, 'IMMUTABLE_TYPE', 'A saved record’s type cannot be changed.');
     }

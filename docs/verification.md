@@ -2,19 +2,19 @@
 
 ## Evidence as of September 20, 2026
 
-This records checks completed during implementation, not a guarantee about every later revision. The documentation refresh reviewed code and documentation consistency; it did not rerun application suites or hosted provisioning.
+This records checks completed during implementation, not a guarantee about every later revision. The latest migration/PATCH revision passed lint, type checking, 43 unit tests, and 6 PostgreSQL integration tests. Browser and hosted checks were not rerun for this revision.
 
-| Check                   | Latest recorded result                                                                                                                                            |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit tests              | 43 passed after clinic scheduling and the year-inclusive calendar-date change                                                                                     |
-| PostgreSQL integration  | 4 passed after clinic scheduling: CRUD, providers, scheduling snapshots/transitions, search, cascade isolation, seed and dashboard consistency                    |
-| Browser tests           | 24 passed against the production build after clinic scheduling; includes search races, timestamp zones, desktop/mobile appointments, provider and phone workflows |
-| Build                   | Production build passed after scheduling; dynamic pages/routes retained                                                                                           |
-| Static checks           | Lint, typecheck, and formatting passed after the year-inclusive calendar-date change                                                                              |
-| Accessibility           | Automated axe checks and exercised keyboard/dialog/form workflows passed; not a complete manual accessibility audit                                               |
-| Responsive behavior     | Workflow checks at 375, 768, and 1440 pixels; appointment details visually reviewed on desktop/mobile                                                             |
-| Real address resolution | Application lookup and a temporary test provider resolved a public address to America/New_York; the fixture was removed                                           |
-| Deployment assets       | Build traces include geo-tz's required 1970 boundary data and exclude unused datasets                                                                             |
+| Check                   | Latest recorded result                                                                                                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit tests              | 43 passed after clinic scheduling and the year-inclusive calendar-date change                                                                                                                             |
+| PostgreSQL integration  | 6 passed after migration/PATCH fixes, including empty-schema migration replay, schema drift check, history reconciliation, route-level PATCH, concurrent edits/completion, and existing service workflows |
+| Browser tests           | 24 passed against the production build after clinic scheduling; includes search races, timestamp zones, desktop/mobile appointments, provider and phone workflows                                         |
+| Build                   | Production build passed after scheduling; dynamic pages/routes retained                                                                                                                                   |
+| Static checks           | Lint, typecheck, and formatting passed after the year-inclusive calendar-date change                                                                                                                      |
+| Accessibility           | Automated axe checks and exercised keyboard/dialog/form workflows passed; not a complete manual accessibility audit                                                                                       |
+| Responsive behavior     | Workflow checks at 375, 768, and 1440 pixels; appointment details visually reviewed on desktop/mobile                                                                                                     |
+| Real address resolution | Application lookup and a temporary test provider resolved a public address to America/New_York; the fixture was removed                                                                                   |
+| Deployment assets       | Build traces include geo-tz's required 1970 boundary data and exclude unused datasets                                                                                                                     |
 
 The final browser run preceded the one-line change adding years to compact calendar dates. That change received static checks and all 43 unit tests, not another full browser/build run. Dependency audits previously reported no known vulnerabilities; no fresh audit was run for this documentation edit.
 
@@ -34,9 +34,6 @@ Complete the account step, provision separate Preview/Production databases, then
 
 ## Known limitations
 
-- **Fresh-database migration ordering:** `20260920180000_clinic_scheduling` alters CareProvider and reads providerId, but sorts before `20260920210000_care_providers`, which creates them. The initial migration contains neither. Static inspection establishes that a fresh sequential migration would fail; this refresh did not run migrations against an empty database. The existing local databases succeeded because providers were already applied before scheduling was added. Correct the ordering with an explicit plan for already-applied migration history, then verify empty-database setup before hosted provisioning. Do not reset an existing database to work around this.
-
-- **Partial record PATCH and scheduling:** `src/app/api/pets/[petId]/records/[recordId]/route.ts` merges existing common fields but currently omits `followUpProviderId` and `followUpTime` from that merge. A partial update that leaves them out on a linked follow-up can fail with a provider validation error. The application form sends both fields, so its save path works. API callers should include both current values until the merge is corrected. This gap was found during documentation review and is not fixed by this documentation-only change.
 - **Unresolved clinic location:** date-only reminders remain available and use APP_TIME_ZONE when no timezone snapshot exists. Timed creation/rescheduling requires a resolved address. Existing clinics resolve when their address is saved, not during migration.
 - **DST overlaps/gaps:** invalid or ambiguous local times are rejected; there is no UI for choosing between two occurrences of the repeated hour.
 - **Time-sensitive status:** status is recomputed on server reads/refresh, not by a continuously running client clock.
@@ -47,3 +44,11 @@ Complete the account step, provision separate Preview/Production databases, then
 ## Interview handoff
 
 The repository includes a master design, ten RFCs, setup/deployment instructions, and a [request-path walkthrough](walkthrough.md). The owner-led extension rehearsal and Loom recording remain human handoff steps. Describe the app as locally verified and deployment-ready in structure, not as remotely deployed and proven.
+
+## Fresh setup and PATCH verification
+
+A separate clean source copy, without node_modules, generated clients, build output, or local environment files, passed npm ci and a production build. Against a newly created disposable PostgreSQL database, npm run db:migrate succeeded twice and npm run db:seed succeeded twice, yielding four pets and twelve records. The disposable database was removed afterward. Existing local development and test databases also upgraded through the guarded history reconciliation without a reset.
+
+The permanent migration test uses a uniquely named empty schema inside the guarded novellia_test database. It invokes the actual migration command, repeats it, compares the resulting schema to schema.prisma, simulates the old applied migration name, and verifies a changed checksum is rejected. Cleanup removes only that generated schema.
+
+Record PATCH tests invoke the actual route and cover omission, explicit null, nested detail merges, empty patches, invalid/managed fields, wrong-pet scope, schedule removal and reopening, and concurrent edits/completion. The rules are documented in [RFC 001](rfcs/001-architecture.md).

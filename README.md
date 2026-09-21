@@ -6,7 +6,7 @@ A shared pet-owner medical-record organizer built with Next.js, Astryx, Tailwind
 
 ## Run locally
 
-**Fresh-install blocker:** the current scheduling migration sorts before the provider-creation migration it depends on. The sequence below is the intended setup, but a new empty database needs the migration ordering corrected first. Existing upgraded local databases work. See [known limitations](docs/verification.md#known-limitations).
+Fresh setup uses committed migrations. `npm run db:migrate` also safely reconciles the earlier scheduling migration name for existing databases; see [migration upgrades](docs/deployment.md#migration-history-upgrade).
 
 Use Node.js 24 (see `.nvmrc`), npm, and Docker Compose. Run these commands from the repository root:
 

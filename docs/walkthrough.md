@@ -20,7 +20,7 @@ Save validates with recordInputSchema for immediate feedback. The form sends JSO
 
 The serializer returns calendar dates as YYYY-MM-DD and timestamps as full ISO instants, with related providers and a derived follow-up status. The form shows a toast, bypasses its dirty guard, navigates to detail, and refreshes server data. The detail page reads through the service again.
 
-The UI sends the complete editable record. The partial PATCH API currently has a scheduling-field merge gap: callers must include existing followUpProviderId and followUpTime for linked follow-ups. See [known limitations](verification.md#known-limitations); do not describe this as fixed.
+The UI sends the complete editable record. API callers may send a subset: omitted values stay unchanged and null clears optional values. Merging, complete validation, and saving happen under a record lock in one transaction. See [the PATCH contract](rfcs/001-architecture.md).
 
 ## Trace an address and appointment
 

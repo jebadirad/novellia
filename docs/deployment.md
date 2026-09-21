@@ -1,6 +1,6 @@
 # Deploying Novellia Pets to Vercel
 
-**Release blocker:** correct the fresh-database migration ordering described in [verification](verification.md#known-limitations), including a plan for already-applied local history, before following this runbook. Existing local migration success does not prove clean hosted setup.
+Use `npm run db:migrate` for both fresh databases and upgrades. It reconciles the earlier scheduling migration name before applying pending migrations.
 
 ## Provision
 
@@ -26,7 +26,7 @@ Do not put credentials in source control, public variables, screenshots, or READ
 
 1. Install with npm ci and run local checks.
 2. Pull the intended environment into an ignored environment file or configure its variables in a trusted shell.
-3. Confirm the target database and run prisma migrate deploy with its DIRECT_URL.
+3. Confirm the target database and run npm run db:migrate with its DIRECT_URL.
 4. Run the seed only when initializing the dedicated demo database.
 5. Deploy the Next.js project; npm run build generates Prisma Client.
 6. Verify pet and record CRUD, direct-page refresh, provider address resolution, a timed appointment viewed from a different browser timezone, and completion/reopen.
@@ -56,3 +56,11 @@ Vercel can roll back application code, but rolling back a deployment does not un
 - [Vercel SQLite storage limitations](https://vercel.com/kb/guide/is-sqlite-supported-in-vercel)
 
 Actual live deployment evidence and remaining account setup are recorded in verification.md.
+
+## Migration history upgrade
+
+The scheduling migration was renamed from `20260920180000_clinic_scheduling` to `20260920230000_clinic_scheduling` so provider creation and address changes precede it. Its SQL is unchanged. A new migration removes an unintended CareProvider.updatedAt database default to match the Prisma schema.
+
+Always run `npm run db:migrate` before `npm run db:dev` on an existing checkout. The wrapper uses DIRECT_URL when supplied, otherwise DATABASE_URL. Fresh databases need no reconciliation. For an existing successfully applied old migration, it checks the exact SQL checksum and absence of conflicting history, then changes only that ledger entry's name in a transaction. It does not rerun the SQL or reset application data. It then invokes Prisma migrate deploy. Repeating the command is safe.
+
+A failed, modified, or duplicate active entry stops the command without changing history. Inspect the target database and Prisma migration status before repairing such a history; do not reset data or mark migrations applied merely to bypass the error. For a failed old scheduling migration on a clean database, confirm its SQL made no changes before using Prisma migrate resolve --rolled-back with the old name, then rerun npm run db:migrate. The old first statement failed when CareProvider did not exist, but inspect the actual failure rather than assuming this applies to every database.

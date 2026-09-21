@@ -22,6 +22,7 @@ import {
   listProviders,
 } from '../../src/server/providers';
 import { providerSchema } from '../../src/domain/providers';
+import { PATCH } from '../../src/app/api/pets/[petId]/records/[recordId]/route';
 import { testDatabaseLifecycle } from '../database-lifecycle';
 vi.mock('../../src/server/address-search', () => ({ searchAddresses: async () => [] }));
 const day = today();
@@ -153,7 +154,12 @@ describe('database workflows', () => {
     ).toBeNull();
     await setFollowUpCompleted(a.id, r.id, true);
     expect((await setFollowUpCompleted(a.id, r.id, false)).followUpCompletedAt).toBeNull();
-    const cleared = await updateRecord(a.id, r.id, { ...recordInput, followUpOn: null });
+    const cleared = await updateRecord(a.id, r.id, {
+      ...recordInput,
+      followUpOn: null,
+      followUpNote: null,
+      followUpProviderId: null,
+    });
     expect(cleared.followUpNote).toBeNull();
     expect((await getFollowUps({ tab: 'open' })).length).toBe(1);
     await deletePet(a.id);
@@ -236,6 +242,7 @@ describe('database workflows', () => {
       ...input,
       followUpOn: null,
       followUpTime: null,
+      followUpProviderId: null,
     });
     expect(cleared).toMatchObject({
       followUpAt: null,
@@ -243,6 +250,100 @@ describe('database workflows', () => {
       followUpProviderId: null,
       followUpCompletedAt: null,
     });
+    await deletePet(pet.id);
+    await deleteProvider(clinic.id);
+  });
+  it('applies PATCH omission, explicit clearing, detail merging, and schedule transition rules', async () => {
+    const pet = await createPet(petInputSchema(day).parse({ name: 'Patch pet', species: 'cat' }));
+    const clinic = await createProvider(providerSchema.parse({ name: 'Patch clinic' }));
+    await prisma.careProvider.update({
+      where: { id: clinic.id },
+      data: { timeZone: 'America/Los_Angeles' },
+    });
+    const record = await createRecord(
+      pet.id,
+      recordInputSchema(day).parse({
+        type: 'vet_visit',
+        title: 'Appointment',
+        occurredOn: day,
+        details: { reason: 'Checkup', assessment: 'Original assessment' },
+        notes: 'Original notes',
+        providerId: clinic.id,
+        followUpOn: addDays(day, 10),
+        followUpProviderId: clinic.id,
+        followUpTime: '09:00',
+        followUpNote: 'Recheck',
+      }),
+    );
+    const send = async (body: unknown, petId = pet.id) => {
+      const response = await PATCH(
+        new Request('http://localhost/api/record', {
+          method: 'PATCH',
+          body: JSON.stringify(body),
+        }),
+        { params: Promise.resolve({ petId, recordId: record.id }) },
+      );
+      return { status: response.status, body: await response.json() };
+    };
+    await Promise.all([
+      send({ notes: 'Concurrent notes' }).then((result) => expect(result.status).toBe(200)),
+      send({ title: 'Concurrent title' }).then((result) => expect(result.status).toBe(200)),
+      setFollowUpCompleted(pet.id, record.id, true),
+    ]);
+    const concurrent = await getRecord(pet.id, record.id);
+    expect(concurrent).toMatchObject({ notes: 'Concurrent notes', title: 'Concurrent title' });
+    expect(concurrent.followUpCompletedAt).not.toBeNull();
+    const completed = await setFollowUpCompleted(pet.id, record.id, true);
+    const edited = await send({ notes: 'Updated notes', details: { assessment: null } });
+    expect(edited.status).toBe(200);
+    expect(edited.body).toMatchObject({
+      notes: 'Updated notes',
+      details: { reason: 'Checkup', assessment: null },
+      followUpAt: record.followUpAt,
+      followUpTime: '09:00',
+      followUpCompletedAt: completed.followUpCompletedAt,
+    });
+    expect((await send({ followUpProviderId: clinic.id })).body.followUpAt).toBe(record.followUpAt);
+    expect((await send({})).body.followUpCompletedAt).toBe(completed.followUpCompletedAt);
+    for (const body of [
+      { notes: '' },
+      { title: null },
+      { details: null },
+      { details: { reason: null } },
+      { details: { surprise: true } },
+      { followUpProviderId: null },
+      { followUpOn: null, followUpTime: '10:00' },
+      { followUpCompletedAt: null },
+      { type: 'medication' },
+      { petId: pet.id },
+    ]) {
+      expect((await send(body)).status).toBe(422);
+    }
+    expect((await getRecord(pet.id, record.id)).followUpAt).toBe(record.followUpAt);
+    expect((await send({ providerId: null, notes: null })).body).toMatchObject({
+      providerId: null,
+      notes: null,
+      followUpAt: record.followUpAt,
+    });
+    expect((await send({ followUpTime: null })).body).toMatchObject({
+      followUpOn: record.followUpOn,
+      followUpAt: null,
+      followUpCompletedAt: null,
+      followUpProviderId: clinic.id,
+    });
+    await setFollowUpCompleted(pet.id, record.id, true);
+    expect((await send({ followUpOn: addDays(day, 11) })).body.followUpCompletedAt).toBeNull();
+    expect((await send({ followUpOn: null })).body).toMatchObject({
+      followUpOn: null,
+      followUpProviderId: null,
+      followUpTime: null,
+      followUpAt: null,
+      followUpTimeZone: null,
+      followUpNote: null,
+      followUpCompletedAt: null,
+    });
+    expect((await send({ followUpNote: 'Orphan note' })).status).toBe(422);
+    expect((await send({}, '00000000-0000-4000-8000-000000000000')).status).toBe(404);
     await deletePet(pet.id);
     await deleteProvider(clinic.id);
   });

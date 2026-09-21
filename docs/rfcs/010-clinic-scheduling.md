@@ -39,7 +39,7 @@ Appointments become overdue after their exact instant. Date-only reminders use t
 
 Completed, added, and updated timestamps still use the browser timezone. Historical calendar dates never shift. The browser zone is read after hydration; the initial server render shows clinic time. No location permission is required.
 
-For the current partial PATCH scheduling-field limitation and fresh migration ordering blocker, see [verification](../verification.md#known-limitations). The full form save path has been tested; these separate paths must not be described as verified.
+Partial updates preserve omitted scheduling fields. Explicit null and follow-up removal rules are defined in [RFC 001](001-architecture.md). Fresh migration replay and already-applied history reconciliation are covered by integration tests.
 
 ## Verification and tradeoffs
 

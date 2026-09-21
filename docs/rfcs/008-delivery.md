@@ -1,6 +1,6 @@
 # RFC 008 — Delivery and verification
 
-Current delivery blockers and test evidence are tracked in [verification](../verification.md). In particular, fresh migration ordering needs correction before clean setup or hosted provisioning; previously upgraded local databases are not evidence that this path passes.
+Delivery evidence and remaining hosted checks are tracked in [verification](../verification.md). Fresh-schema migration replay and partial-record PATCH rules have dedicated integration coverage.
 
 ## Local environment
 

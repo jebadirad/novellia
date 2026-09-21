@@ -45,7 +45,21 @@ Indexes: providerId, followUpProviderId, (petId, occurredOn), (type, occurredOn)
 
 Create endpoints accept editable fields and return the created DTO with 201. Reads and updates return JSON with 200. Deletions return 204 without a body.
 
-The PATCH contract supports changing a subset of top-level editable fields by merging with the current validated record. A supplied details object replaces the previous details object and must independently satisfy that type's schema. Pet and type cannot change on an existing medical record. The current route merge omits the two scheduling input fields; partial API callers must include followUpProviderId and followUpTime for linked follow-ups until that gap is fixed. See [known limitations](../verification.md#known-limitations).
+Medical-record PATCH uses omission to preserve a value and explicit `null` to clear an optional value. Empty strings are rejected at this API boundary; forms normalize empty optional controls to null before submitting. Supplied `details` fields merge with existing details: omitted keys survive, null clears optional keys, and required keys cannot be cleared. Unknown and server-managed fields are rejected. Pet and type cannot change.
+
+The service locks the record, merges against the current row, validates the complete result, and writes within one transaction. An empty object is accepted and preserves editable values (updatedAt may advance). Concurrent editable changes use last successful write wins; omitted fields and server-managed completion are preserved.
+
+| Request                                                      | Result                                                                                               |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `{ "notes": "Updated" }`                                     | Change only notes; preserve appointment and completion                                               |
+| `{ "notes": null, "providerId": null }`                      | Clear notes and historical provider; preserve the follow-up provider                                 |
+| `{ "details": { "assessment": null } }`                      | Clear assessment; preserve the visit reason                                                          |
+| `{ "followUpTime": null }`                                   | Convert to a date-only reminder and reopen it                                                        |
+| `{ "followUpOn": null }`                                     | Remove the follow-up, including provider, time, zone snapshot, note, and completion                  |
+| Changed follow-up date, time, or provider                    | Revalidate the complete schedule and reopen it                                                       |
+| `{ "followUpProviderId": null }` while retaining a follow-up | Reject with 422; a retained follow-up needs a provider, except unchanged legacy unassigned reminders |
+
+Removing a follow-up cannot also supply non-null follow-up fields. Follow-up values without a date are rejected. Validation failures leave the record unchanged. Use the dedicated `{ "completed": true/false }` endpoint for completion; general PATCH cannot write completion timestamps.
 
 Unknown body fields are rejected. Null/nonobject JSON is 400. Field validation is 422 with `error.code`, `error.message`, and `error.fieldErrors` keyed by dot-separated paths. Missing or cross-pet items are 404. Unexpected errors are logged server-side and return a generic 500 response.
 

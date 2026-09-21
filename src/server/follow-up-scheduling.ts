@@ -32,7 +32,6 @@ export async function followUpData(
       followUpProviderId: existing.followUpProviderId,
       followUpAt: existing.followUpAt,
       followUpTimeZone: existing.followUpTimeZone,
-      followUpCompletedAt: existing.followUpCompletedAt,
     };
   }
   if (!input.followUpProviderId) {
