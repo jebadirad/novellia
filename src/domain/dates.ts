@@ -29,6 +29,15 @@ export function formatDate(day: string | null, compact = false): string {
     ...(compact ? {} : { year: 'numeric' as const }),
   }).format(toDate(day)!);
 }
+/** Timestamps represent instants; convert before choosing the displayed calendar day. */
+export function formatTimestampDate(timestamp: string, timeZone: string, compact = false): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    month: compact ? 'short' : 'long',
+    day: 'numeric',
+    ...(compact ? {} : { year: 'numeric' as const }),
+  }).format(new Date(timestamp));
+}
 export function petAge(birthDate: string | null, today: string): string {
   if (!birthDate) {
     return 'Age unknown';

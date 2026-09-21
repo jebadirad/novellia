@@ -43,3 +43,9 @@ There is no email, push notification, automatically recurring task, clinical rec
 ## Acceptance
 
 Exercise complete/reopen from all entry points, rescheduling, removing a follow-up, repeat requests, deleting parent data, midnight boundaries, leap day, and month/year rollover.
+
+## Timestamp display
+
+Completed, added, and updated timestamps are stored as PostgreSQL timestamptz and serialized as full UTC ISO instants. The shared LocalTimestamp component displays their dates in each visitor's browser timezone; its tooltip includes the local time and timezone. The initial server render uses a brief placeholder until the browser timezone is available, preventing a hydration mismatch or a misleading UTC date.
+
+Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE still defines today for validation and overdue/upcoming classification in this shared demo. Browser-local timestamp display does not change those shared business-day rules. No database migration or additional stored timezone is required.

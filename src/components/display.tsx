@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LocalTimestamp } from './local-timestamp';
 import {
   PawPrint,
   Cat,
@@ -295,9 +296,13 @@ export function FollowUpList({ records, today }: { records: RecordDto[]; today: 
             </Link>
             <p>
               <Link href={`/pets/${record.petId}`}>{record.pet.name}</Link> ·{' '}
-              {record.followUpCompletedAt
-                ? `Completed ${formatDate(record.followUpCompletedAt.slice(0, 10), true)}`
-                : `Due ${formatDate(record.followUpOn, true)}`}
+              {record.followUpCompletedAt ? (
+                <>
+                  Completed <LocalTimestamp value={record.followUpCompletedAt} compact />
+                </>
+              ) : (
+                `Due ${formatDate(record.followUpOn, true)}`
+              )}
             </p>
             <DueBadge record={record} today={today} />
           </div>

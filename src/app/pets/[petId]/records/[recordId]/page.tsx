@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LocalTimestamp } from '@/components/local-timestamp';
 import { getRecord } from '@/server/records';
 import { pageData, pageId } from '@/server/page-data';
 import { today } from '@/server/context';
@@ -89,7 +90,7 @@ export default async function RecordPage({
                 <p className="mb-4 text-xs text-secondary">Due {formatDate(record.followUpOn)}</p>
                 {record.followUpCompletedAt && (
                   <p className="mb-4 text-xs text-secondary">
-                    Completed {formatDate(record.followUpCompletedAt.slice(0, 10))}
+                    Completed <LocalTimestamp value={record.followUpCompletedAt} />
                   </p>
                 )}
                 <FollowUpAction record={record} />
@@ -104,8 +105,8 @@ export default async function RecordPage({
         </Panel>
       </div>
       <p className="px-1 py-4.5 text-xs text-secondary">
-        Added {formatDate(record.createdAt.slice(0, 10))} · Updated{' '}
-        {formatDate(record.updatedAt.slice(0, 10))}
+        Added <LocalTimestamp value={record.createdAt} /> · Updated{' '}
+        <LocalTimestamp value={record.updatedAt} />
       </p>
     </>
   );

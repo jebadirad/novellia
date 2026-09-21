@@ -65,3 +65,9 @@ Historical medical records are editable and deletable. This app does not claim c
 Authentication would add an owner/workspace relation and require ownership filters in every read and mutation. Multiple tasks per record would introduce a FollowUp table. Cross-record reporting could promote frequently queried JSON properties into columns or related tables.
 
 These are future changes, not partially implemented abstractions.
+
+## Timestamp display
+
+Completed, added, and updated timestamps are stored as PostgreSQL timestamptz and serialized as full UTC ISO instants. The shared LocalTimestamp component displays their dates in each visitor's browser timezone; its tooltip includes the local time and timezone. The initial server render uses a brief placeholder until the browser timezone is available, preventing a hydration mismatch or a misleading UTC date.
+
+Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE still defines today for validation and overdue/upcoming classification in this shared demo. Browser-local timestamp display does not change those shared business-day rules. No database migration or additional stored timezone is required.

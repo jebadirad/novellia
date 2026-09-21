@@ -145,3 +145,9 @@ No authentication, ownership isolation, uploads, OCR, clinic integrations, exter
 Future authentication would add an owner identity and ownership on pets, migrate existing demo data deliberately, and require an authenticated owner scope in every service read and write. Record access must inherit the pet's ownership check. Filtering the interface alone would not secure the API.
 
 See [verification and remaining deployment work](docs/verification.md) for checks actually performed and the provider setup still required.
+
+## Timestamp display
+
+Completed, added, and updated timestamps are stored as PostgreSQL timestamptz and serialized as full UTC ISO instants. The shared LocalTimestamp component displays their dates in each visitor's browser timezone; its tooltip includes the local time and timezone. The initial server render uses a brief placeholder until the browser timezone is available, preventing a hydration mismatch or a misleading UTC date.
+
+Calendar-only fields (birth date, medical event date, medication end date, and follow-up due date) remain YYYY-MM-DD and do not shift across timezones. APP_TIME_ZONE still defines today for validation and overdue/upcoming classification in this shared demo. Browser-local timestamp display does not change those shared business-day rules. No database migration or additional stored timezone is required.
